@@ -10,7 +10,6 @@ class CrossCodeLocation(Location):
 
 class LocationData(NamedTuple):
     name: str
-    offset: int
     clearance: str
     region: str
 
