@@ -1,5 +1,6 @@
 from worlds.AutoWorld import World
 from .Common import *
+from .Locations import locations_data
 from .Options import crosscode_options
 
 class CrossCodeWorld(World):
@@ -24,6 +25,6 @@ class CrossCodeWorld(World):
         item.item_name : BASE_ID + item.item_id for item in crosscode_items
     }
 
-    item_name_to_data = links_awakening_items_by_name
-
-    location_name_to_id = get_locations_to_id()
+    location_name_to_id = {
+        location.name: BASE_ID + idx for idx, location in enumerate(locations_data)
+    }
