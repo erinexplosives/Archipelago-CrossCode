@@ -93,7 +93,7 @@ def get_item_classification(item: dict) -> str:
     else:
         raise RuntimeError(f"I don't know how to classify this item: {item['name']}")
 
-def create_ast_call_location(name: str, clearance: str, region: str, kind: str, conditions: typing.List[str]) -> ast.Call:
+def create_ast_call_location(name: str, code: int, clearance: str, region: str, kind: str, conditions: typing.List[str]) -> ast.Call:
     cond_elements, cond_items = parse_condition_list(conditions)
 
     ast_item = ast.Call(
@@ -103,6 +103,10 @@ def create_ast_call_location(name: str, clearance: str, region: str, kind: str, 
             ast.keyword(
                 arg="name",
                 value=ast.Constant(name)
+            ),
+            ast.keyword(
+                arg="code",
+                value=ast.Constant(code)
             ),
             ast.keyword(
                 arg="clearance",
@@ -183,6 +187,8 @@ def generate_files() -> None:
     # also, IDs are not contiguous so we store these as a dict
     found_items: typing.Dict[int, ast.Call] = {}
 
+    code = BASE_ID
+
     # items_dict is a list containing objects representing maps and the Chests and Events found therein
     for dev_name, room in rando_items_dict.items():
         has_fancy_name = "name" in room
@@ -212,7 +218,9 @@ def generate_files() -> None:
 
             location_full_name = f"{room_name} - {chest_name}"
 
-            ast_location_list.append(create_ast_call_location(location_full_name, clearance, region, "CHEST", conditions))
+            ast_location_list.append(create_ast_call_location(location_full_name, code, clearance, region, "CHEST", conditions))
+
+            code += 1
 
             # item stuff
             item_id = chest["item"]
@@ -245,7 +253,9 @@ def generate_files() -> None:
                     location_full_name += f" {circuit_override_number}"
                     circuit_override_number += 1
 
-                ast_location_list.append(create_ast_call_location(location_full_name, "Default", region, "EVENT", conditions))
+                ast_location_list.append(create_ast_call_location(location_full_name, code, "Default", region, "EVENT", conditions))
+
+                code += 1
 
     regions_seen = set()
 
@@ -317,7 +327,7 @@ def generate_files() -> None:
     regions_seen_keys = list(regions_seen)
     regions_seen_keys.sort(key=float)
 
-    code_region_list = [f'\t"{k}"' for k in regions_seen_keys]
+    code_region_list = [f'\t{ast.unparse(ast.Constant(k))}' for k in regions_seen_keys]
     code_region_list = ",\n".join(code_region_list)
 
     code_region_connections = ["\t" + ast.unparse(item) for item in ast_region_connections]

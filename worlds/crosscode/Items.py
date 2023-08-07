@@ -1,9 +1,6 @@
 from typing import NamedTuple
 from BaseClasses import Item, ItemClassification
 
-class CrossCodeItem(Item):
-    game: str = "CrossCode"
-
 class ItemData(NamedTuple):
     name: str
     item_id: int
@@ -17,6 +14,17 @@ class ItemData(NamedTuple):
 
     def __eq__(self, other):
         return self.item_id == other.item_id and self.amount == other.amount
+
+class CrossCodeItem(Item):
+    game: str = "CrossCode"
+
+    def __init__(self, player: int, data: ItemData):
+        super(CrossCodeItem, self).__init__(
+            data.name,
+            data.classification,
+            data.combo_id,
+            player,
+        )
 
 items_data = [
 	ItemData(name='Golden Triangle', item_id=0, amount=1, combo_id=300000, classification=ItemClassification.filler, quantity=3),
@@ -280,3 +288,5 @@ items_data = [
 	ItemData(name='Spark Tin x8', item_id=390, amount=8, combo_id=305122, classification=ItemClassification.filler, quantity=1),
 	ItemData(name='Venom Shroom x9', item_id=252, amount=9, combo_id=305660, classification=ItemClassification.filler, quantity=1)
 ]
+
+items_dict = {data.name: data for data in items_data}
