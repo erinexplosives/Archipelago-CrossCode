@@ -62,6 +62,21 @@ def parse_condition(cond: str) -> typing.Tuple[int, ast.expr]:
     return (COND_ITEM, ast.Tuple([ast.Constant(item_name), ast.Constant(amount)]))
 
 
+def parse_condition_list(conditions: typing.List[str]) -> tuple[ast.List, ast.List]:
+    cond_elements = ast.List([])
+    cond_items = ast.List([])
+
+    for cond in conditions:
+        cond_type, tree = parse_condition(cond)
+
+        if cond_type == COND_ELEMENT:
+            cond_elements.elts.append(tree)
+        elif cond_type == COND_ITEM:
+            cond_items.elts.append(tree)
+
+    return cond_elements, cond_items
+
+
 def get_item_classification(item: dict) -> str:
     """Deduce the classification of an item based on its item-database entry"""
     if item["type"] == "CONS" or item["type"] == "TRADE":
@@ -79,16 +94,7 @@ def get_item_classification(item: dict) -> str:
         raise RuntimeError(f"I don't know how to classify this item: {item['name']}")
 
 def create_ast_call_location(name: str, clearance: str, region: str, kind: str, conditions: typing.List[str]) -> ast.Call:
-    cond_elements = ast.List([])
-    cond_items = ast.List([])
-
-    for cond in conditions:
-        cond_type, tree = parse_condition(cond)
-
-        if cond_type == COND_ELEMENT:
-            cond_elements.elts.append(tree)
-        elif cond_type == COND_ITEM:
-            cond_items.elts.append(tree)
+    cond_elements, cond_items = parse_condition_list(conditions)
 
     ast_item = ast.Call(
         func=ast.Name("LocationData"),
@@ -241,6 +247,48 @@ def generate_files() -> None:
 
                 ast_location_list.append(create_ast_call_location(location_full_name, "Default", region, "EVENT", conditions))
 
+    regions_seen = set()
+
+    ast_region_connections: typing.List[ast.Call] = []
+
+    for ary in rando_data["areas"]:
+        region_from, arrow, region_to, *conditions = ary
+
+        regions_seen.add(region_from)
+        regions_seen.add(region_to)
+
+        if arrow != "<->":
+            raise RuntimeError(f"Area connection malformed: {ary}")
+
+        cond_elements, cond_items = parse_condition_list(conditions)
+
+        ast_item = ast.Call(
+            func=ast.Name("RegionConnection"),
+            args=[],
+            keywords=[
+                ast.keyword(
+                    arg="region_from",
+                    value=ast.Constant(region_from)
+                ),
+                ast.keyword(
+                    arg="region_to",
+                    value=ast.Constant(region_to)
+                ),
+                ast.keyword(
+                    arg="cond_elements",
+                    value=cond_elements
+                ),
+                ast.keyword(
+                    arg="cond_items",
+                    value=cond_items
+                ),
+            ]
+        )
+
+        ast.fix_missing_locations(ast_item)
+        ast_region_connections.append(ast_item)
+
+
     environment = jinja2.Environment(loader=jinja2.FileSystemLoader("templates"))
 
     template = environment.get_template("Locations.template.py")
@@ -263,6 +311,22 @@ def generate_files() -> None:
 
     with open("Items.py", "w") as f:
         f.write(items_complete)
+
+    template = environment.get_template("Regions.template.py")
+
+    regions_seen_keys = list(regions_seen)
+    regions_seen_keys.sort(key=float)
+
+    code_region_list = [f'\t"{k}"' for k in regions_seen_keys]
+    code_region_list = ",\n".join(code_region_list)
+
+    code_region_connections = ["\t" + ast.unparse(item) for item in ast_region_connections]
+    code_region_connections = ",\n".join(code_region_connections)
+
+    regions_complete = template.render(region_list=code_region_list, region_connections=code_region_connections)
+
+    with open("Regions.py", "w") as f:
+        f.write(regions_complete)
 
 if __name__ == "__main__":
     generate_files()
