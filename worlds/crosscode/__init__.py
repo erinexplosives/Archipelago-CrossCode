@@ -31,7 +31,7 @@ class CrossCodeWorld(World):
     }
 
     location_name_to_id = {
-        location.name: BASE_ID + idx for idx, location in enumerate(locations_data)
+        location.name: location.code for location in locations_data
     }
 
     region_dict: dict[str, Region]
@@ -59,8 +59,9 @@ class CrossCodeWorld(World):
 
     def create_items(self):
         for data in items_data:
-            item = CrossCodeItem(self.player, data)
-            self.multiworld.itempool.append(item)
+            for _ in range(data.quantity):
+                item = CrossCodeItem(self.player, data)
+                self.multiworld.itempool.append(item)
 
     def set_rules(self):
         for name, region in self.region_dict.items():
