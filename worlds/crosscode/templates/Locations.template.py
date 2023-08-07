@@ -19,6 +19,7 @@ class LocationData(typing.NamedTuple):
 
 class CrossCodeLocation(Location):
     game: str = "CrossCode"
+    data: LocationData
 
     def __init__(self, player: int, data: LocationData, regionDict: dict[str, Region]):
         super(CrossCodeLocation, self).__init__(
@@ -28,6 +29,7 @@ class CrossCodeLocation(Location):
             regionDict[data.region]
         )
 
+        self.data = data
         self.event = False
 
 # GENERATED CODE

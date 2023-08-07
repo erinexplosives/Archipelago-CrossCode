@@ -17,6 +17,7 @@ class ItemData(NamedTuple):
 
 class CrossCodeItem(Item):
     game: str = "CrossCode"
+    data: ItemData
 
     def __init__(self, player: int, data: ItemData):
         super(CrossCodeItem, self).__init__(
@@ -25,6 +26,8 @@ class CrossCodeItem(Item):
             data.combo_id,
             player,
         )
+
+        self.data = data
 
 items_data = [
 {{items_data}}
