@@ -173,6 +173,9 @@ minecraft*/
 minecraft_versions.json
 !worlds/minecraft/
 
+# directory that may hold sensitive information we don't want to push
+worlds/crosscode/data
+
 # pyenv
 .python-version
 

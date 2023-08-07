@@ -333,7 +333,16 @@ def generate_files() -> None:
     code_region_connections = ["\t" + ast.unparse(item) for item in ast_region_connections]
     code_region_connections = ",\n".join(code_region_connections)
 
-    regions_complete = template.render(region_list=code_region_list, region_connections=code_region_connections)
+    code_starting_region = ast.unparse(ast.Constant(rando_data["startingArea"]))
+    
+    code_excluded_regions = ast.unparse(ast.List([ast.Constant(x) for x in rando_data["softLockAreas"]]))
+
+    regions_complete = template.render(
+        region_list=code_region_list,
+        region_connections=code_region_connections,
+        starting_region = code_starting_region,
+        excluded_regions = code_excluded_regions
+    )
 
     with open("Regions.py", "w") as f:
         f.write(regions_complete)

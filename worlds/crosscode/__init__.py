@@ -6,7 +6,7 @@ from .Items import CrossCodeItem, items_data, items_dict
 from .Locations import CrossCodeLocation, locations_data
 from .Logic import conditions_satisfied
 from .Options import crosscode_options
-from .Regions import region_list, region_connections
+from .Regions import region_list, region_connections, starting_region
 
 class CrossCodeWebWorld(WebWorld):
     theme="ocean"
@@ -27,7 +27,7 @@ class CrossCodeWorld(World):
     # items exist. They could be generated from json or something else. They can
     # include events, but don't have to since events will be placed manually.
     item_name_to_id = {
-        item.name : BASE_ID + item.combo_id for item in items_data
+        item.name : item.combo_id for item in items_data
     }
 
     location_name_to_id = {
@@ -47,6 +47,9 @@ class CrossCodeWorld(World):
                 {conn.region_to: f"{conn.region_from} <-> {conn.region_to}"},
                 {conn.region_to: conditions_satisfied(self.player, conn)},
             )
+
+        menu_region = Region("Menu", self.player, self.multiworld)
+        menu_region.add_exits({starting_region: "login"})
 
         for name, region in self.region_dict.items():
             region.locations = \

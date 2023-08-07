@@ -7,6 +7,9 @@ class RegionConnection(typing.NamedTuple):
     cond_elements: typing.List[str]
     cond_items: typing.List[typing.Tuple[str, int]]
 
+starting_region = '2'
+excluded_regions = ['1', '22']
+
 region_list: typing.List[str] = [
 	'2',
 	'3',
