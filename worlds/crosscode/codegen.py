@@ -59,9 +59,22 @@ def parse_condition(cond: str) -> typing.Tuple[int, ast.expr]:
 
     return (COND_ITEM, ast.Tuple([ast.Constant(item_name), ast.Constant(amount)]))
 
+
 def get_item_classification(item: dict) -> str:
     """Deduce the classification of an item based on its item-database entry"""
-    return "progression"
+    if item["type"] == "CONS" or item["type"] == "TRADE":
+        return "filler"
+    elif item["type"] == "KEY":
+        return "progression"
+    elif item["type"] == "EQUIP":
+        return "useful"
+    elif item["type"] == "TOGGLE":
+        if "Booster" in item["name"]["en_US"]:
+            return "progression"
+        else:
+            return "filler"
+    else:
+        raise RuntimeError(f"I don't know how to classify this item: {item['name']}")
 
 def create_ast_call_location(name: str, clearance: str, region: str, kind: str, conditions: typing.List[str]) -> ast.Call:
     cond_elements = ast.List([])
@@ -200,6 +213,8 @@ def generate_files() -> None:
             item_info = itemdb[item_id]
             item_name = item_info["name"]["en_US"]
 
+            item_full_name = item_name if item_amount == 1 else f"{item_name} x{item_amount}"
+
             combo_id = BASE_ID + num_items * (item_amount - 1) + item_id
 
             if combo_id in found_items:
@@ -207,7 +222,7 @@ def generate_files() -> None:
                 quantity.value.value += 1
                 ast.fix_missing_locations(quantity)
             else:
-                found_items[combo_id] = create_ast_call_item(item_name, item_id, item_amount, combo_id, get_item_classification(item_info))
+                found_items[combo_id] = create_ast_call_item(item_full_name, item_id, item_amount, combo_id, get_item_classification(item_info))
 
         for events in dict.values(room["events"]):
             for event in events:
