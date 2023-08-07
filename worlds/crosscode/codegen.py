@@ -24,6 +24,8 @@ BASE_ID = 300000
 COND_ELEMENT = 1
 COND_ITEM = 2
 
+CIRCUIT_OVERRIDE = 428
+
 def parse_condition(cond: str) -> typing.Tuple[int, ast.expr]:
     if cond in {"heat", "cold", "shock", "wave"}:
         return (COND_ELEMENT, ast.Constant(f"{cond.title()}"))
@@ -224,6 +226,7 @@ def generate_files() -> None:
             else:
                 found_items[combo_id] = create_ast_call_item(item_full_name, item_id, item_amount, combo_id, get_item_classification(item_info))
 
+        circuit_override_number = 1
         for events in dict.values(room["events"]):
             for event in events:
                 region = event["condition"][0]
@@ -232,6 +235,9 @@ def generate_files() -> None:
                 conditions = [x for x in event["condition"][1:] if x != ""]
 
                 location_full_name = f"{room_name} - {event_name}"
+                if event["item"] == CIRCUIT_OVERRIDE:
+                    location_full_name += f" {circuit_override_number}"
+                    circuit_override_number += 1
 
                 ast_location_list.append(create_ast_call_location(location_full_name, "Default", region, "EVENT", conditions))
 
