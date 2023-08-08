@@ -4,7 +4,7 @@
 #
 # This process requires a few data files.
 # Put the following files in the `data' directory:
-# - `item-database.json' from your CrossCode installation
+# - `assets/data' from your CrossCode installation (rename it to `cc-data')
 # - `data.json' from the CCItemRandomizer mod
 
 import json
@@ -17,7 +17,8 @@ def get_json_object(filename: str):
         return json.load(f)
 
 rando_data = get_json_object("data/data.json")
-item_data = get_json_object("data/item-database.json")
+item_data = get_json_object("data/cc-data/item-database.json")
+# database = get_json_object("data/cc-data/database.json")
 
 BASE_ID = 300000
 
