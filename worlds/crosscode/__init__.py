@@ -1,4 +1,4 @@
-from BaseClasses import Region
+from BaseClasses import ItemClassification, Location, Region, Item
 from worlds.AutoWorld import WebWorld, World
 from worlds.generic.Rules import set_rule
 from .Common import *
@@ -56,6 +56,18 @@ class CrossCodeWorld(World):
         for name, region in self.region_dict.items():
             region.locations = \
                 [CrossCodeLocation(self.player, data, self.region_dict) for data in locations_data if data.region == name]
+
+        victory = Region("Floor ??", self.player, self.multiworld)
+        self.multiworld.regions.append(victory)
+
+        loc = Location(self.player, "The Creator", parent=victory)
+        victory.locations = [loc]
+
+        loc.place_locked_item(Item("Victory", ItemClassification.progression, None, self.player))
+
+        self.multiworld.completion_condition[self.player] = lambda state: state.has("Victory", self.player)
+
+        self.region_dict["31"].add_exits(["Floor ??"])
 
     def create_items(self):
         for data in items_data:

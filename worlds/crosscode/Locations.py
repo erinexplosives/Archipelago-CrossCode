@@ -395,5 +395,7 @@ locations_data = [
 	LocationData(name="So'najiz Temple - Standing Attraction - Chest", code=300357, clearance='Default', region='26', kind=CHECK_CHEST, cond_elements=[], cond_items=[]),
 	LocationData(name="So'najiz Temple - Attracting Conveyance - Chest", code=300358, clearance='Default', region='26', kind=CHECK_CHEST, cond_elements=[], cond_items=[]),
 	LocationData(name="So'najiz Temple - Fast Conveyance - Chest", code=300359, clearance='Default', region='26', kind=CHECK_CHEST, cond_elements=[], cond_items=[]),
-	LocationData(name="So'najiz Temple - Flaming Conveyance - Chest", code=300360, clearance='Default', region='26', kind=CHECK_CHEST, cond_elements=[], cond_items=[])
+	LocationData(name="So'najiz Temple - Flaming Conveyance - Chest", code=300360, clearance='Default', region='26', kind=CHECK_CHEST, cond_elements=[], cond_items=[]),
+	LocationData(name='Chase of the Hologram Frobbit', code=300361, clearance='Default', region='20', kind=CHECK_QUEST, cond_elements=[], cond_items=[]),
+	LocationData(name='Mushroom Kingdom', code=300362, clearance='Default', region='23', kind=CHECK_QUEST, cond_elements=[], cond_items=[])
 ]

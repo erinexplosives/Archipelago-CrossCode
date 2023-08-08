@@ -18,7 +18,7 @@ def get_json_object(filename: str):
 
 rando_data = get_json_object("data/data.json")
 item_data = get_json_object("data/cc-data/item-database.json")
-# database = get_json_object("data/cc-data/database.json")
+database = get_json_object("data/cc-data/database.json")
 
 BASE_ID = 300000
 
@@ -268,7 +268,6 @@ def generate_files() -> None:
                     circuit_override_number += 1
 
                 ast_location_list.append(create_ast_call_location(location_full_name, code, "Default", region, "EVENT", conditions))
-
                 code += 1
 
                 # item stuff
@@ -282,10 +281,20 @@ def generate_files() -> None:
                 conditions = [x for x in element["condition"][1:] if x != ""]
 
                 location_full_name = f"{room_name} - {element_name}"
-
                 ast_location_list.append(create_ast_call_location(location_full_name, code, "Default", region, "ELEMENT", conditions))
-
                 code += 1
+
+    for dev_name, quest in dict.items(rando_data["quests"]):
+        region = quest["condition"][0]
+
+        conditions = [x for x in quest["condition"][1:] if x != ""]
+
+        data = database["quests"][dev_name]
+        location_name = data["name"]["en_US"]
+        ast_location_list.append(create_ast_call_location(location_name, code, "Default", region, "QUEST", conditions))
+        code += 1
+
+        add_item(quest["item"], quest["amount"])
 
     regions_seen = set()
 
