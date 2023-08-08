@@ -1,4 +1,4 @@
-from BaseClasses import ItemClassification, Location, Region, Item
+from BaseClasses import ItemClassification, Location, LocationProgressType, Region, Item
 from worlds.AutoWorld import WebWorld, World
 from worlds.generic.Rules import set_rule
 from .Common import *
@@ -6,7 +6,7 @@ from .Items import CrossCodeItem, items_data, items_dict
 from .Locations import CrossCodeLocation, locations_data
 from .Logic import conditions_satisfied
 from .Options import crosscode_options
-from .Regions import region_list, region_connections, starting_region
+from .Regions import region_list, region_connections, starting_region, excluded_regions
 
 class CrossCodeWebWorld(WebWorld):
     theme="ocean"
@@ -62,6 +62,10 @@ class CrossCodeWorld(World):
             region.locations = \
                 [CrossCodeLocation(self.player, data, self.region_dict) for data in locations_data if data.region == name]
 
+            if name in excluded_regions:
+                for location in region.locations:
+                    location.progress_type = LocationProgressType.EXCLUDED
+
         victory = Region("Floor ??", self.player, self.multiworld)
         self.multiworld.regions.append(victory)
 
@@ -75,10 +79,18 @@ class CrossCodeWorld(World):
         self.region_dict["31"].add_exits(["Floor ??"])
 
     def create_items(self):
+        exclude = self.multiworld.precollected_items[self.player][:]
         for data in items_data:
             for _ in range(data.quantity):
                 item = CrossCodeItem(self.player, data)
-                self.multiworld.itempool.append(item)
+                try:
+                    idx = exclude.index(item)
+                except ValueError:
+                    self.multiworld.itempool.append(item)
+                    continue
+
+                exclude.pop(idx)
+                self.multiworld.itempool.append(self.create_item("Chef Sandwich x2"))
 
     def set_rules(self):
         for name, region in self.region_dict.items():

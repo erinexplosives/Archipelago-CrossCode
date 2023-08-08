@@ -230,6 +230,9 @@ def generate_files() -> None:
         for chest in dict.values(room["chests"]):
             # location stuff
             region = chest["condition"][0]
+            if region in rando_data["softLockAreas"]:
+                continue
+
             clearance = chest["type"]
             
             # this occasionally shows up.
@@ -258,6 +261,9 @@ def generate_files() -> None:
             for event in events:
                 # location stuff
                 region = event["condition"][0]
+                if region in rando_data["softLockAreas"]:
+                    continue
+
                 event_name = itemdb[event["item"]]["name"]["en_US"]
 
                 conditions = [x for x in event["condition"][1:] if x != ""]
