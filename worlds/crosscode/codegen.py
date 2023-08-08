@@ -189,6 +189,21 @@ def generate_files() -> None:
 
     code = BASE_ID
 
+    def add_item(item_id: int, item_amount: int):
+        item_info = itemdb[item_id]
+        item_name = item_info["name"]["en_US"]
+
+        item_full_name = item_name if item_amount == 1 else f"{item_name} x{item_amount}"
+
+        combo_id = BASE_ID + num_items * (item_amount - 1) + item_id
+
+        if combo_id in found_items:
+            quantity = found_items[combo_id].keywords[-1]
+            quantity.value.value += 1
+            ast.fix_missing_locations(quantity)
+        else:
+            found_items[combo_id] = create_ast_call_item(item_full_name, item_id, item_amount, combo_id, get_item_classification(item_info))
+
     # items_dict is a list containing objects representing maps and the Chests and Events found therein
     for dev_name, room in rando_items_dict.items():
         has_fancy_name = "name" in room
@@ -223,26 +238,12 @@ def generate_files() -> None:
             code += 1
 
             # item stuff
-            item_id = chest["item"]
-            item_amount = chest["amount"]
-
-            item_info = itemdb[item_id]
-            item_name = item_info["name"]["en_US"]
-
-            item_full_name = item_name if item_amount == 1 else f"{item_name} x{item_amount}"
-
-            combo_id = BASE_ID + num_items * (item_amount - 1) + item_id
-
-            if combo_id in found_items:
-                quantity = found_items[combo_id].keywords[-1]
-                quantity.value.value += 1
-                ast.fix_missing_locations(quantity)
-            else:
-                found_items[combo_id] = create_ast_call_item(item_full_name, item_id, item_amount, combo_id, get_item_classification(item_info))
+            add_item(chest["item"], chest["amount"])
 
         circuit_override_number = 1
         for events in dict.values(room["events"]):
             for event in events:
+                # location stuff
                 region = event["condition"][0]
                 event_name = itemdb[event["item"]]["name"]["en_US"]
 
@@ -256,6 +257,9 @@ def generate_files() -> None:
                 ast_location_list.append(create_ast_call_location(location_full_name, code, "Default", region, "EVENT", conditions))
 
                 code += 1
+
+                # item stuff
+                add_item(event["item"], event["amount"])
 
     regions_seen = set()
 
