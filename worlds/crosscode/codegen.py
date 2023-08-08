@@ -21,6 +21,10 @@ item_data = get_json_object("data/item-database.json")
 
 BASE_ID = 300000
 
+# I reserve some item IDs at the beginning of our slot for elements
+# and other items that don't map to CrossCode items
+RESERVED_ITEM_IDS = 100
+
 COND_ELEMENT = 1
 COND_ITEM = 2
 
@@ -195,7 +199,7 @@ def generate_files() -> None:
 
         item_full_name = item_name if item_amount == 1 else f"{item_name} x{item_amount}"
 
-        combo_id = BASE_ID + num_items * (item_amount - 1) + item_id
+        combo_id = BASE_ID + RESERVED_ITEM_IDS + num_items * (item_amount - 1) + item_id
 
         if combo_id in found_items:
             quantity = found_items[combo_id].keywords[-1]
@@ -203,6 +207,9 @@ def generate_files() -> None:
             ast.fix_missing_locations(quantity)
         else:
             found_items[combo_id] = create_ast_call_item(item_full_name, item_id, item_amount, combo_id, get_item_classification(item_info))
+
+    for idx, el in enumerate(["Heat", "Cold", "Shock", "Wave"]):
+        found_items[BASE_ID + idx] = create_ast_call_item(el, 0, 1, BASE_ID + idx, "progression")
 
     # items_dict is a list containing objects representing maps and the Chests and Events found therein
     for dev_name, room in rando_items_dict.items():
@@ -260,6 +267,20 @@ def generate_files() -> None:
 
                 # item stuff
                 add_item(event["item"], event["amount"])
+
+        if "elements" in room:
+            for element in dict.values(room["elements"]):
+                region = element["condition"][0]
+                element_name = element["item"].title()
+
+                conditions = [x for x in element["condition"][1:] if x != ""]
+
+                location_full_name = f"{room_name} - {element_name}"
+
+                ast_location_list.append(create_ast_call_location(location_full_name, code, "Default", region, "ELEMENT", conditions))
+
+                code += 1
+
 
     regions_seen = set()
 
