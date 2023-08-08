@@ -379,7 +379,7 @@ locations_data = [
 	LocationData(name="Grand Krys'kajo - East Branch - Chest 2", code=300341, clearance='Default', region='28', kind=CHECK_CHEST, cond_elements=[], cond_items=[]),
 	LocationData(name="Grand Krys'kajo - West Branch - Chest 1", code=300342, clearance='Default', region='28', kind=CHECK_CHEST, cond_elements=[], cond_items=[]),
 	LocationData(name="Grand Krys'kajo - West Branch - Chest 2", code=300343, clearance='Default', region='28', kind=CHECK_CHEST, cond_elements=[], cond_items=[]),
-	LocationData(name="Grand Krys'kajo - Falling Leaves - MasterKey Chest", code=300344, clearance='MasterKey', region='29', kind=CHECK_CHEST, cond_elements=[], cond_items=[]),
+	LocationData(name="Grand Krys'kajo - Falling Leaves - Chest", code=300344, clearance='Default', region='29', kind=CHECK_CHEST, cond_elements=[], cond_items=[]),
 	LocationData(name="Grand Krys'kajo - Branch Conveyance - Chest", code=300345, clearance='Default', region='28', kind=CHECK_CHEST, cond_elements=[], cond_items=[]),
 	LocationData(name="Grand Krys'kajo - Branch Transmit - Chest 1", code=300346, clearance='Default', region='28', kind=CHECK_CHEST, cond_elements=[], cond_items=[]),
 	LocationData(name="Grand Krys'kajo - Branch Transmit - Chest 2", code=300347, clearance='Default', region='28', kind=CHECK_CHEST, cond_elements=[], cond_items=[]),

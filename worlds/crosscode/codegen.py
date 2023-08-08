@@ -230,6 +230,11 @@ def generate_files() -> None:
             # location stuff
             region = chest["condition"][0]
             clearance = chest["type"]
+            
+            # this occasionally shows up.
+            # it does represent a different type of chest but you don't need anything to open it
+            if clearance == "MasterKey":
+                clearance = "Default"
             chest_name = "Chest" if clearance == "Default" else f"{clearance} Chest"
 
             conditions = [x for x in chest["condition"][1:] if x != ""]
@@ -280,7 +285,6 @@ def generate_files() -> None:
                 ast_location_list.append(create_ast_call_location(location_full_name, code, "Default", region, "ELEMENT", conditions))
 
                 code += 1
-
 
     regions_seen = set()
 
