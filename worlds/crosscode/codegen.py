@@ -4,10 +4,14 @@
 #
 # This process requires a few data files.
 # Put the following files in the `data' directory:
-# - `assets/data' from your CrossCode installation (rename it to `cc-data')
+# - `assets' from your CrossCode installation
 # - `data.json' from the CCItemRandomizer mod
+#
+# This script also produces a copy of `data.json` with additional metadata for the mod.
+# Copy `data/out/data.json` into `CCMultiworldRandomizer/data`
 
 import json
+from os import mkdir
 import jinja2
 import ast
 import typing
@@ -17,8 +21,8 @@ def get_json_object(filename: str):
         return json.load(f)
 
 rando_data = get_json_object("data/data.json")
-item_data = get_json_object("data/cc-data/item-database.json")
-database = get_json_object("data/cc-data/database.json")
+item_data = get_json_object("data/assets/data/item-database.json")
+database = get_json_object("data/assets/data/database.json")
 
 BASE_ID = 300000
 
@@ -194,6 +198,13 @@ def generate_files() -> None:
 
     code = BASE_ID
 
+    constants: typing.Dict[str, typing.Any] = {
+        "BASE_ID": BASE_ID,
+        "BASE_NORMAL_LOCATION_ID": BASE_ID + RESERVED_ITEM_IDS
+    }
+
+    rando_data["mwconstants"] = constants
+
     def add_item(item_id: int, item_amount: int):
         item_info = itemdb[item_id]
         item_name = item_info["name"]["en_US"]
@@ -250,6 +261,7 @@ def generate_files() -> None:
             location_full_name = f"{room_name} - {chest_name}"
 
             ast_location_list.append(create_ast_call_location(location_full_name, code, clearance, region, "CHEST", conditions))
+            chest["mwid"] = code
 
             code += 1
 
@@ -274,6 +286,8 @@ def generate_files() -> None:
                     circuit_override_number += 1
 
                 ast_location_list.append(create_ast_call_location(location_full_name, code, "Default", region, "EVENT", conditions))
+                event["mwid"] = code
+
                 code += 1
 
                 # item stuff
@@ -287,7 +301,10 @@ def generate_files() -> None:
                 conditions = [x for x in element["condition"][1:] if x != ""]
 
                 location_full_name = f"{room_name} - {element_name}"
+
                 ast_location_list.append(create_ast_call_location(location_full_name, code, "Default", region, "ELEMENT", conditions))
+                element["mwid"] = code
+
                 code += 1
 
     for dev_name, quest in dict.items(rando_data["quests"]):
@@ -298,6 +315,8 @@ def generate_files() -> None:
         data = database["quests"][dev_name]
         location_name = data["name"]["en_US"]
         ast_location_list.append(create_ast_call_location(location_name, code, "Default", region, "QUEST", conditions))
+        quest["mwid"] = code
+
         code += 1
 
         add_item(quest["item"], quest["amount"])
@@ -391,6 +410,14 @@ def generate_files() -> None:
 
     with open("Regions.py", "w") as f:
         f.write(regions_complete)
+
+    try:
+        mkdir("data/out")
+    except FileExistsError:
+        pass
+
+    with open("data/out/data.json", "w") as f:
+        json.dump(rando_data, f, indent='\t')
 
 if __name__ == "__main__":
     generate_files()
