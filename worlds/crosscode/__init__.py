@@ -76,7 +76,7 @@ class CrossCodeWorld(World):
 
         self.multiworld.completion_condition[self.player] = lambda state: state.has("Victory", self.player)
 
-        self.region_dict["31"].add_exits(["Floor ??"])
+        self.region_dict["32"].add_exits(["Floor ??"])
 
     def create_items(self):
         exclude = self.multiworld.precollected_items[self.player][:]
