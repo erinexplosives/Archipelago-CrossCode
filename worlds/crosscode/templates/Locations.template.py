@@ -1,3 +1,5 @@
+{{generated_comment | indent("# ", True)}}
+
 import typing
 from BaseClasses import Location, Region
 

@@ -10,6 +10,11 @@
 # This script also produces a copy of `data-in.json` with additional metadata for the mod, called `data.json`
 # Copy `data/out/data.json` into `CCMultiworldRandomizer/data`
 
+generated_comment = """WARNING: THIS FILE HAS BEEN GENERATED!
+Modifications to this file will not be kept.
+If you need to change something here, check out codegen.py and the templates directory.
+"""
+
 import string
 import json
 from os import mkdir
@@ -400,12 +405,16 @@ def generate_files() -> None:
 
     environment = jinja2.Environment(loader=jinja2.FileSystemLoader("templates"))
 
+    common_args = {
+        "generated_comment": generated_comment
+    }
+
     ### LOCATIONS
     template = environment.get_template("Locations.template.py")
 
     code_location_list = [ast.unparse(item) for item in ast_location_list]
     code = ",\n".join(code_location_list)
-    locations_complete = template.render(locations_data=code)
+    locations_complete = template.render(locations_data=code, **common_args)
 
     with open("Locations.py", "w") as f:
         f.write(locations_complete)
@@ -418,7 +427,7 @@ def generate_files() -> None:
 
     code_item_list = [ast.unparse(found_items[k]) for k in found_item_keys]
     code = ",\n".join(code_item_list)
-    items_complete = template.render(items_data=code)
+    items_complete = template.render(items_data=code, **common_args)
 
     with open("Items.py", "w") as f:
         f.write(items_complete)
@@ -453,7 +462,9 @@ def generate_files() -> None:
 
     regions_complete = template.render(
             modes=", ".join([f'"{m}"' for m in rando_data["modes"]]),
-            region_packs=code_region_pack_list
+            default_mode=rando_data["defaultMode"],
+            region_packs=code_region_pack_list,
+            **common_args
     )
 
     with open("Regions.py", "w") as f:

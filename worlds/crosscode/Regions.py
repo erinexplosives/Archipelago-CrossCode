@@ -1,3 +1,8 @@
+# WARNING: THIS FILE HAS BEEN GENERATED!
+# Modifications to this file will not be kept.
+# If you need to change something here, check out codegen.py and the templates directory.
+
+
 import typing
 from BaseClasses import Region, Entrance
 
@@ -15,6 +20,7 @@ class RegionsData(typing.NamedTuple):
     region_connections: typing.List[RegionConnection]
 
 modes = [ "linear", "open" ]
+default_mode = "open"
 
 region_packs: typing.Dict[str, RegionsData] = {
     "linear": RegionsData(

@@ -1,3 +1,8 @@
+# WARNING: THIS FILE HAS BEEN GENERATED!
+# Modifications to this file will not be kept.
+# If you need to change something here, check out codegen.py and the templates directory.
+
+
 import typing
 from BaseClasses import Item, ItemClassification
 

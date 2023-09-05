@@ -1,3 +1,5 @@
+{{generated_comment | indent("# ", True)}}
+
 import typing
 from BaseClasses import Region, Entrance
 
@@ -15,6 +17,7 @@ class RegionsData(typing.NamedTuple):
     region_connections: typing.List[RegionConnection]
 
 modes = [ {{ modes }} ]
+default_mode = "{{ default_mode }}"
 
 region_packs: typing.Dict[str, RegionsData] = {
     {% for r in region_packs -%}
