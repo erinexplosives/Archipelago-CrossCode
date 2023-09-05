@@ -6,7 +6,7 @@ from .Items import CrossCodeItem, items_data, items_dict
 from .Locations import CrossCodeLocation, locations_data
 from .Logic import conditions_satisfied
 from .Options import crosscode_options
-from .Regions import region_list, region_connections, starting_region, excluded_regions
+from .Regions import region_packs
 
 class CrossCodeWebWorld(WebWorld):
     theme="ocean"

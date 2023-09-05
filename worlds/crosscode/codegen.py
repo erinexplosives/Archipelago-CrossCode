@@ -5,11 +5,12 @@
 # This process requires a few data files.
 # Put the following files in the `data' directory:
 # - `assets' from your CrossCode installation
-# - `data.json' from the CCItemRandomizer mod
+# - `data-in.json' from the CCMultiworldRandomizer mod
 #
-# This script also produces a copy of `data.json` with additional metadata for the mod.
+# This script also produces a copy of `data-in.json` with additional metadata for the mod, called `data.json`
 # Copy `data/out/data.json` into `CCMultiworldRandomizer/data`
 
+import string
 import json
 from os import mkdir
 import jinja2
@@ -20,7 +21,7 @@ def get_json_object(filename: str):
     with open(filename, "r") as f:
         return json.load(f)
 
-rando_data = get_json_object("data/data.json")
+rando_data = get_json_object("data/data-in.json")
 item_data = get_json_object("data/assets/data/item-database.json")
 database = get_json_object("data/assets/data/database.json")
 
@@ -71,11 +72,13 @@ def parse_condition(cond: str) -> typing.Tuple[int, ast.expr]:
     return (COND_ITEM, ast.Tuple([ast.Constant(item_name), ast.Constant(amount)]))
 
 
-def parse_condition_list(conditions: typing.List[str]) -> tuple[ast.List, ast.List]:
+def parse_condition_list(conditions: typing.List[str], includes_region=True) -> tuple[ast.List, ast.List, str|None]:
     cond_elements = ast.List([])
     cond_items = ast.List([])
 
-    for cond in conditions:
+    start_index = 1 if includes_region else 0
+
+    for cond in [x for x in conditions[start_index:] if x != ""]:
         cond_type, tree = parse_condition(cond)
 
         if cond_type == COND_ELEMENT:
@@ -83,7 +86,7 @@ def parse_condition_list(conditions: typing.List[str]) -> tuple[ast.List, ast.Li
         elif cond_type == COND_ITEM:
             cond_items.elts.append(tree)
 
-    return cond_elements, cond_items
+    return cond_elements, cond_items, conditions[0] if includes_region else None
 
 
 def get_item_classification(item: dict) -> str:
@@ -102,8 +105,46 @@ def get_item_classification(item: dict) -> str:
     else:
         raise RuntimeError(f"I don't know how to classify this item: {item['name']}")
 
-def create_ast_call_location(name: str, code: int, clearance: str, region: str, kind: str, conditions: typing.List[str]) -> ast.Call:
-    cond_elements, cond_items = parse_condition_list(conditions)
+def create_ast_call_location(name: str, code: int, clearance: str, kind: str, condition_lists: typing.Dict[str, typing.List[str]]) -> ast.Call:
+    keys: typing.List[ast.Constant] = []
+    values: typing.List[ast.Call] = []
+
+    for key, conditions in condition_lists.items():
+        cond_elements, cond_items, region = parse_condition_list(conditions)
+        
+        # working inside out here, we have to start with region.
+        # then we add cond_elements and cond_items only if they are relevant
+        access_info_keywords = [
+            ast.keyword(
+                arg="region",
+                value=ast.Constant(region)
+            ),
+        ]
+
+        if cond_elements.elts != []:
+            access_info_keywords.append(
+                ast.keyword(
+                    arg="cond_elements",
+                    value=cond_elements
+                )
+            )
+
+        if cond_items.elts != []:
+            access_info_keywords.append(
+                ast.keyword(
+                    arg="cond_items",
+                    value=cond_items
+                )
+            )
+
+        access_info = ast.Call(
+            func=ast.Name("AccessInformation"),
+            args=[],
+            keywords=access_info_keywords,
+        )
+
+        keys.append(ast.Constant(key))
+        values.append(access_info)
 
     ast_item = ast.Call(
         func=ast.Name("LocationData"),
@@ -122,20 +163,15 @@ def create_ast_call_location(name: str, code: int, clearance: str, region: str, 
                 value=ast.Constant(clearance)
             ),
             ast.keyword(
-                arg="region",
-                value=ast.Constant(region)
-            ),
-            ast.keyword(
                 arg="kind",
                 value=ast.Name(f"CHECK_{kind}"),
             ),
             ast.keyword(
-                arg="cond_elements",
-                value=cond_elements
-            ),
-            ast.keyword(
-                arg="cond_items",
-                value=cond_items
+                arg="access",
+                value=ast.Dict(
+                    keys=keys,
+                    values=values
+                )
             ),
         ]
     )
@@ -172,7 +208,7 @@ def create_ast_call_item(name: str, item_id: int, amount: int, combo_id: int, cl
             ),
             ast.keyword(
                 arg="quantity",
-                value=ast.Constant(1)
+                value=ast.Dict(keys=[], values=[])
             ),
         ]
     )
@@ -205,7 +241,7 @@ def generate_files() -> None:
 
     rando_data["mwconstants"] = constants
 
-    def add_item(item_id: int, item_amount: int):
+    def add_item(item_id: int, item_amount: int, region_pack: str):
         item_info = itemdb[item_id]
         item_name = item_info["name"]["en_US"]
 
@@ -213,12 +249,24 @@ def generate_files() -> None:
 
         combo_id = BASE_ID + RESERVED_ITEM_IDS + num_items * (item_amount - 1) + item_id
 
-        if combo_id in found_items:
-            quantity = found_items[combo_id].keywords[-1]
-            quantity.value.value += 1
-            ast.fix_missing_locations(quantity)
-        else:
+        if combo_id not in found_items:
             found_items[combo_id] = create_ast_call_item(item_full_name, item_id, item_amount, combo_id, get_item_classification(item_info))
+
+        quantity_keyword = found_items[combo_id].keywords[-1]
+        quantity = quantity_keyword.value
+
+        assert(isinstance(quantity, ast.Dict))
+        try:
+            idx = list(map(lambda x: x.value, quantity.keys)).index(region_pack)
+        except ValueError:
+            quantity.keys.append(ast.Constant(region_pack))
+            quantity.values.append(ast.Constant(1))
+        else:
+            number = quantity.values[idx]
+            assert(isinstance(number, ast.Constant))
+            number.value += 1
+
+        ast.fix_missing_locations(quantity)
 
     for idx, el in enumerate(["Heat", "Cold", "Shock", "Wave"]):
         found_items[BASE_ID + idx] = create_ast_call_item(el, 0, 1, BASE_ID + idx, "progression")
@@ -239,11 +287,6 @@ def generate_files() -> None:
 
         # loop over the chests in the room
         for chest in dict.values(room["chests"]):
-            # location stuff
-            region = chest["condition"][0]
-            if region in rando_data["softLockAreas"]:
-                continue
-
             clearance = chest["type"]
             
             # this occasionally shows up.
@@ -252,160 +295,165 @@ def generate_files() -> None:
                 clearance = "Default"
             chest_name = "Chest" if clearance == "Default" else f"{clearance} Chest"
 
-            conditions = [x for x in chest["condition"][1:] if x != ""]
-
             if clearance in chest_amounts and chest_amounts[clearance][1] > 1:
                 chest_amounts[clearance][0] += 1
                 chest_name += f" {chest_amounts[clearance][0]}"
 
             location_full_name = f"{room_name} - {chest_name}"
 
-            ast_location_list.append(create_ast_call_location(location_full_name, code, clearance, region, "CHEST", conditions))
+            ast_location_list.append(create_ast_call_location(location_full_name, code, clearance, "CHEST", chest["condition"]))
             chest["mwid"] = code
 
             code += 1
 
-            # item stuff
-            add_item(chest["item"], chest["amount"])
+            for pack in chest["condition"].keys():
+                add_item(chest["item"], chest["amount"], pack)
 
         circuit_override_number = 1
         for events in dict.values(room["events"]):
             for event in events:
-                # location stuff
-                region = event["condition"][0]
-                if region in rando_data["softLockAreas"]:
-                    continue
-
                 event_name = itemdb[event["item"]]["name"]["en_US"]
-
-                conditions = [x for x in event["condition"][1:] if x != ""]
 
                 location_full_name = f"{room_name} - {event_name}"
                 if event["item"] == CIRCUIT_OVERRIDE:
                     location_full_name += f" {circuit_override_number}"
                     circuit_override_number += 1
 
-                ast_location_list.append(create_ast_call_location(location_full_name, code, "Default", region, "EVENT", conditions))
+                ast_location_list.append(create_ast_call_location(location_full_name, code, "Default", "EVENT", event["condition"]))
                 event["mwid"] = code
 
                 code += 1
 
-                # item stuff
-                add_item(event["item"], event["amount"])
+                for pack in event["condition"].keys():
+                    add_item(event["item"], event["amount"], pack)
 
         if "elements" in room:
             for element in dict.values(room["elements"]):
-                region = element["condition"][0]
                 element_name = element["item"].title()
-
-                conditions = [x for x in element["condition"][1:] if x != ""]
 
                 location_full_name = f"{room_name} - {element_name}"
 
-                ast_location_list.append(create_ast_call_location(location_full_name, code, "Default", region, "ELEMENT", conditions))
+                ast_location_list.append(create_ast_call_location(location_full_name, code, "Default", "ELEMENT", element["condition"]))
                 element["mwid"] = code
 
                 code += 1
 
     for dev_name, quest in dict.items(rando_data["quests"]):
-        region = quest["condition"][0]
-
-        conditions = [x for x in quest["condition"][1:] if x != ""]
-
         data = database["quests"][dev_name]
         location_name = data["name"]["en_US"]
-        ast_location_list.append(create_ast_call_location(location_name, code, "Default", region, "QUEST", conditions))
+        ast_location_list.append(create_ast_call_location(location_name, code, "Default", "QUEST", quest["condition"]))
         quest["mwid"] = code
 
         code += 1
 
-        add_item(quest["item"], quest["amount"])
+        for pack in event["condition"].keys():
+            add_item(quest["item"], quest["amount"], pack)
 
-    regions_seen = set()
+    regions_seen: typing.Dict[str, typing.Set[str]] = {}
 
-    ast_region_connections: typing.List[ast.Call] = []
+    region_keys: typing.List[str] = []
+    region_values: typing.List[typing.List[ast.Call]] = []
 
-    for ary in rando_data["areas"]:
-        region_from, arrow, region_to, *conditions = ary
+    for mode, regions in rando_data["areas"].items():
+        ast_region_connections: typing.List[ast.Call] = []
 
-        regions_seen.add(region_from)
-        regions_seen.add(region_to)
+        regions_seen[mode] = set();
+        for ary in regions:
+            region_from, arrow, region_to, *conditions = ary
 
-        if arrow != "<->":
-            raise RuntimeError(f"Area connection malformed: {ary}")
+            regions_seen[mode].add(region_from)
+            regions_seen[mode].add(region_to)
 
-        cond_elements, cond_items = parse_condition_list(conditions)
+            if arrow != "<->":
+                raise RuntimeError(f"Area connection malformed: {ary}")
 
-        ast_item = ast.Call(
-            func=ast.Name("RegionConnection"),
-            args=[],
-            keywords=[
-                ast.keyword(
-                    arg="region_from",
-                    value=ast.Constant(region_from)
-                ),
-                ast.keyword(
-                    arg="region_to",
-                    value=ast.Constant(region_to)
-                ),
-                ast.keyword(
-                    arg="cond_elements",
-                    value=cond_elements
-                ),
-                ast.keyword(
-                    arg="cond_items",
-                    value=cond_items
-                ),
-            ]
-        )
+            cond_elements, cond_items, _ = parse_condition_list(conditions, False)
 
-        ast.fix_missing_locations(ast_item)
-        ast_region_connections.append(ast_item)
+            ast_item = ast.Call(
+                func=ast.Name("RegionConnection"),
+                args=[],
+                keywords=[
+                    ast.keyword(
+                        arg="region_from",
+                        value=ast.Constant(region_from)
+                    ),
+                    ast.keyword(
+                        arg="region_to",
+                        value=ast.Constant(region_to)
+                    ),
+                    ast.keyword(
+                        arg="cond_elements",
+                        value=cond_elements
+                    ),
+                    ast.keyword(
+                        arg="cond_items",
+                        value=cond_items
+                    ),
+                ]
+            )
 
+            ast.fix_missing_locations(ast_item)
+            ast_region_connections.append(ast_item)
+
+        region_keys.append(mode)
+        region_values.append(ast_region_connections)
 
     environment = jinja2.Environment(loader=jinja2.FileSystemLoader("templates"))
 
+    ### LOCATIONS
     template = environment.get_template("Locations.template.py")
 
-    code_location_list = ["\t" + ast.unparse(item) for item in ast_location_list]
+    code_location_list = [ast.unparse(item) for item in ast_location_list]
     code = ",\n".join(code_location_list)
     locations_complete = template.render(locations_data=code)
 
     with open("Locations.py", "w") as f:
         f.write(locations_complete)
 
+    ### ITEMS
     template = environment.get_template("Items.template.py")
 
     found_item_keys = list(dict.keys(found_items))
     found_item_keys.sort()
 
-    code_item_list = ["\t" + ast.unparse(found_items[k]) for k in found_item_keys]
+    code_item_list = [ast.unparse(found_items[k]) for k in found_item_keys]
     code = ",\n".join(code_item_list)
     items_complete = template.render(items_data=code)
 
     with open("Items.py", "w") as f:
         f.write(items_complete)
 
+    ### REGIONS
     template = environment.get_template("Regions.template.py")
-
-    regions_seen_keys = list(regions_seen)
-    regions_seen_keys.sort(key=float)
-
-    code_region_list = [f'\t{ast.unparse(ast.Constant(k))}' for k in regions_seen_keys]
-    code_region_list = ",\n".join(code_region_list)
-
-    code_region_connections = ["\t" + ast.unparse(item) for item in ast_region_connections]
-    code_region_connections = ",\n".join(code_region_connections)
-
-    code_starting_region = ast.unparse(ast.Constant(rando_data["startingArea"]))
     
-    code_excluded_regions = ast.unparse(ast.List([ast.Constant(x) for x in rando_data["softLockAreas"]]))
+    code_region_pack_list = []
+
+    for idx, connections in enumerate(region_values):
+        mode = region_keys[idx]
+
+        regions_seen_keys = list(regions_seen[mode])
+        regions_seen_keys.sort(key=lambda x: float(x.strip(string.ascii_letters)))
+
+        code_region_list = [f'{ast.unparse(ast.Constant(k))}' for k in regions_seen_keys]
+        code_region_list = ",\n".join(code_region_list)
+
+        code_region_connections = [ast.unparse(item) for item in connections]
+        code_region_connections = ",\n".join(code_region_connections)
+
+        code_excluded_regions = ast.unparse(ast.List([ast.Constant(x) for x in rando_data["softLockAreas"]]))
+
+        code_region_pack_list.append({
+            "name": mode,
+            "region_list": code_region_list,
+            "region_connections": code_region_connections,
+            "starting_region": rando_data["startingArea"][mode],
+            "goal_region": rando_data["goalArea"][mode],
+            "excluded_regions": code_excluded_regions
+        })
 
     regions_complete = template.render(
-        region_list=code_region_list,
-        region_connections=code_region_connections,
-        starting_region = code_starting_region,
-        excluded_regions = code_excluded_regions
+            modes=", ".join([f'"{m}"' for m in rando_data["modes"]]),
+            region_packs=code_region_pack_list
     )
 
     with open("Regions.py", "w") as f:

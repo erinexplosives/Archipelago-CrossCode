@@ -1,13 +1,13 @@
-from typing import NamedTuple
+import typing
 from BaseClasses import Item, ItemClassification
 
-class ItemData(NamedTuple):
+class ItemData(typing.NamedTuple):
     name: str
     item_id: int
     amount: int
     combo_id: int
     classification: ItemClassification
-    quantity: int
+    quantity: typing.Dict[str, int]
 
     def __hash__(self):
         return hash((self.item_id, self.amount))
@@ -30,7 +30,7 @@ class CrossCodeItem(Item):
         self.data = data
 
 items_data = [
-{{items_data}}
+    {{items_data | indent(4)}}
 ]
 
 items_dict = {data.name: data for data in items_data}
