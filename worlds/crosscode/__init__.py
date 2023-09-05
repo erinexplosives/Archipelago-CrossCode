@@ -1,12 +1,13 @@
+import typing
 from BaseClasses import ItemClassification, Location, LocationProgressType, Region, Item
 from worlds.AutoWorld import WebWorld, World
 from worlds.generic.Rules import set_rule
 from .Common import *
 from .Items import CrossCodeItem, items_data, items_dict
 from .Locations import CrossCodeLocation, locations_data
-from .Logic import conditions_satisfied
-from .Options import crosscode_options
-from .Regions import region_packs
+from .Logic import conditions_satisfied_location, conditions_satisfied_region
+from .Options import Reachability, crosscode_options
+from .Regions import RegionsData, region_packs
 
 class CrossCodeWebWorld(WebWorld):
     theme="ocean"
@@ -40,29 +41,64 @@ class CrossCodeWorld(World):
     }
 
     region_dict: dict[str, Region]
+    logic_mode: str
+    region_pack: RegionsData
 
+    def register_reachability(self, option: Reachability, items: typing.Iterable[str]):
+        if option == Reachability.option_local:
+            local_items = self.multiworld.local_items[self.player].value
+            for item in items:
+                local_items.add(item)
+        elif option == Reachability.option_non_local:
+            non_local_items = self.multiworld.non_local_items[self.player].value
+            for item in items:
+                non_local_items.add(item)
+        
     def create_item(self, item: str) -> CrossCodeItem:
         return CrossCodeItem(self.player, items_dict[item])
 
+    def generate_early(self):
+        start_inventory = self.multiworld.start_inventory[self.player].value
+        self.logic_mode = self.multiworld.logic_mode[self.player].value
+        self.region_pack = region_packs[self.logic_mode]
+
+        if self.multiworld.start_with_green_leaf_shade[self.player].value:
+            start_inventory["Green Leaf Shade"] = 1
+
+        shade_loc: Reachability = self.multiworld.shade_locations[self.player].value
+        element_loc: Reachability = self.multiworld.element_locations[self.player].value
+
+        self.register_reachability(
+            shade_loc,
+            (
+                "Green Leaf Shade", "Yellow Sand Shade", "Blue Ice Shade",
+                "Red Flame Shade", "Purple Bolt Shade", "Azure Drop Shade",
+                "Green Seed Shade", "Star Shade", "Meteor Shade",
+            )
+        )
+
+        self.register_reachability(element_loc, ("Heat", "Cold", "Shock", "Wave"))
+
+
     def create_regions(self):
-        self.region_dict = {name: Region(name, self.player, self.multiworld) for name in region_list}
+        self.region_dict = {name: Region(name, self.player, self.multiworld) for name in self.region_pack.region_list}
         self.multiworld.regions.extend([val for val in self.region_dict.values()])
 
-        for conn in region_connections:
+        for conn in self.region_pack.region_connections:
             self.region_dict[conn.region_from].add_exits(
                 {conn.region_to: f"{conn.region_from} <-> {conn.region_to}"},
-                {conn.region_to: conditions_satisfied(self.player, conn)},
+                {conn.region_to: conditions_satisfied_region(self.player, conn)},
             )
 
         menu_region = Region("Menu", self.player, self.multiworld)
-        menu_region.add_exits({starting_region: "login"})
+        menu_region.add_exits({self.region_pack.starting_region: "login"})
         self.multiworld.regions.append(menu_region)
 
         for name, region in self.region_dict.items():
             region.locations = \
-                [CrossCodeLocation(self.player, data, self.region_dict) for data in locations_data if data.region == name]
+                [CrossCodeLocation(self.player, data, self.logic_mode, self.region_dict) for data in locations_data if data.access[self.logic_mode].region == name]
 
-            if name in excluded_regions:
+            if name in self.region_pack.excluded_regions:
                 for location in region.locations:
                     location.progress_type = LocationProgressType.EXCLUDED
 
@@ -81,7 +117,7 @@ class CrossCodeWorld(World):
     def create_items(self):
         exclude = self.multiworld.precollected_items[self.player][:]
         for data in items_data:
-            for _ in range(data.quantity):
+            for _ in range(data.quantity[self.logic_mode]):
                 item = CrossCodeItem(self.player, data)
                 try:
                     idx = exclude.index(item)
@@ -93,6 +129,6 @@ class CrossCodeWorld(World):
                 self.multiworld.itempool.append(self.create_item("Chef Sandwich x2"))
 
     def set_rules(self):
-        for name, region in self.region_dict.items():
+        for _, region in self.region_dict.items():
             for loc in region.locations:
-                set_rule(loc, conditions_satisfied(self.player, loc.data))
+                set_rule(loc, conditions_satisfied_location(self.player, self.logic_mode, loc.data))

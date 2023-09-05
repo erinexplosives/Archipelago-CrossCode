@@ -25,17 +25,19 @@ class LocationData(typing.NamedTuple):
 class CrossCodeLocation(Location):
     game: str = "CrossCode"
     data: LocationData
+    access: AccessInformation
 
-    def __init__(self, player: int, data: LocationData, region_pack, region_dict: dict[str, Region]):
+    def __init__(self, player: int, data: LocationData, mode, region_dict: dict[str, Region]):
         super(CrossCodeLocation, self).__init__(
             player,
             data.name,
             data.code,
-            region_dict[data.access[region_pack].region]
+            region_dict[data.access[mode].region]
         )
 
         self.data = data
         self.event = False
+        self.access = data.access[mode]
 
 # GENERATED CODE
 # DO NOT TOUCH
