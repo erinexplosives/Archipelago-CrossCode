@@ -67,7 +67,7 @@ locations_data = [
     LocationData(name="Autumn's Rise - Pathway 1 - Chest", code=300019, clearance='Default', kind=CHECK_CHEST, access={'linear': AccessInformation(region='3'), 'open': AccessInformation(region='open3')}),
     LocationData(name="Autumn's Rise - Pathway 2 - Chest", code=300020, clearance='Default', kind=CHECK_CHEST, access={'linear': AccessInformation(region='3'), 'open': AccessInformation(region='open3')}),
     LocationData(name="Autumn's Rise - Pathway 3 - Chest", code=300021, clearance='Default', kind=CHECK_CHEST, access={'linear': AccessInformation(region='3'), 'open': AccessInformation(region='open3')}),
-    LocationData(name="Autumn's Rise - Pathway 3 - Guild Pass", code=300022, clearance='Default', kind=CHECK_EVENT, access={'linear': AccessInformation(region='3', cond_items=[('Mine Pass', 1)]), 'open': AccessInformation(region='open3.1', cond_items=[('Mine Pass', 1)])}),
+    LocationData(name="Autumn's Rise - Pathway 3 - Guild Pass", code=300022, clearance='Default', kind=CHECK_EVENT, access={'linear': AccessInformation(region='3.1'), 'open': AccessInformation(region='open3.1')}),
     LocationData(name="Autumn's Rise - Off Road 1 - Chest", code=300023, clearance='Default', kind=CHECK_CHEST, access={'linear': AccessInformation(region='3'), 'open': AccessInformation(region='open3')}),
     LocationData(name="Autumn's Rise - Off Road 2 - Chest", code=300024, clearance='Default', kind=CHECK_CHEST, access={'linear': AccessInformation(region='3'), 'open': AccessInformation(region='open3')}),
     LocationData(name="Autumn's Rise - Pathway 6 - Chest 1", code=300025, clearance='Default', kind=CHECK_CHEST, access={'linear': AccessInformation(region='3'), 'open': AccessInformation(region='open3')}),
