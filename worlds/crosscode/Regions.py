@@ -157,7 +157,7 @@ region_packs: typing.Dict[str, RegionsData] = {
             RegionConnection(region_from='open4.3', region_to='open4.6', cond_elements=['Heat'], cond_items=[]),
             RegionConnection(region_from='open4.6', region_to='open4.7', cond_elements=[], cond_items=[('Mine Key', 10)]),
             RegionConnection(region_from='open4.1', region_to='open4.8', cond_elements=[], cond_items=[('Mine Master Key', 1)]),
-            RegionConnection(region_from='open3', region_to='open5', cond_elements=[], cond_items=[('Blue Mango', 1)]),
+            RegionConnection(region_from='open3', region_to='open5', cond_elements=[], cond_items=[('Blue Ice Shade', 1)]),
             RegionConnection(region_from='open5', region_to='open6', cond_elements=[], cond_items=[('Maroon Cave Pass', 1)]),
             RegionConnection(region_from='open5', region_to='open7.1', cond_elements=['Heat'], cond_items=[('Yellow Sand Shade', 1)]),
             RegionConnection(region_from='open7.1', region_to='open7.2', cond_elements=[], cond_items=[("Faj'ro Key", 1)]),
