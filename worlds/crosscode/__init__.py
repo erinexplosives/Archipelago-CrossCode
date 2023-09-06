@@ -138,3 +138,11 @@ class CrossCodeWorld(World):
         for _, region in self.region_dict.items():
             for loc in region.locations:
                 set_rule(loc, conditions_satisfied_location(self.player, self.logic_mode, loc.data))
+
+    def fill_slot_data(self):
+        return {
+            "mode": self.logic_mode,
+            "options": {
+                "vtShadeLock": self.multiworld.vt_shade_lock[self.player].value
+            }
+        }
