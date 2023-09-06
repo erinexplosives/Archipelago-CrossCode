@@ -30,6 +30,7 @@ region_packs: typing.Dict[str, RegionsData] = {
         region_list = [
             '2',
             '3',
+            '3.1',
             '4',
             '5',
             '6',
@@ -49,6 +50,7 @@ region_packs: typing.Dict[str, RegionsData] = {
             '19',
             '20',
             '21',
+            '22',
             '23',
             '24',
             '25',
@@ -64,6 +66,7 @@ region_packs: typing.Dict[str, RegionsData] = {
         region_connections = [
             RegionConnection(region_from='2', region_to='3', cond_elements=[], cond_items=[('Green Leaf Shade', 1)]),
             RegionConnection(region_from='3', region_to='4', cond_elements=[], cond_items=[('Mine Pass', 1), ('Guild Pass', 1)]),
+            RegionConnection(region_from='3', region_to='3.1', cond_elements=[], cond_items=[('Mine Pass', 1)]),
             RegionConnection(region_from='4', region_to='5', cond_elements=[], cond_items=[('Mine Key', 1)]),
             RegionConnection(region_from='5', region_to='6', cond_elements=[], cond_items=[('Mine Key', 2)]),
             RegionConnection(region_from='6', region_to='7', cond_elements=[], cond_items=[('Mine Key', 3)]),
@@ -92,7 +95,8 @@ region_packs: typing.Dict[str, RegionsData] = {
             RegionConnection(region_from='28', region_to='30', cond_elements=[], cond_items=[('Kajo Master Key', 1)]),
             RegionConnection(region_from='30', region_to='31', cond_elements=[], cond_items=[('Star Shade', 1)]),
             RegionConnection(region_from='31', region_to='32', cond_elements=[], cond_items=[('Old Dojo Key', 1)]),
-            RegionConnection(region_from='32', region_to='33', cond_elements=[], cond_items=[('Meteor Shade', 1)])
+            RegionConnection(region_from='32', region_to='33', cond_elements=[], cond_items=[('Meteor Shade', 1)]),
+            RegionConnection(region_from='31', region_to='22', cond_elements=[], cond_items=[])
         ]
     ),
     "open": RegionsData(
