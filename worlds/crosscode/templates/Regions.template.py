@@ -16,7 +16,7 @@ class RegionsData(typing.NamedTuple):
     region_list: typing.List[str]
     region_connections: typing.List[RegionConnection]
 
-modes = [ {{ modes }} ]
+modes = [ {{ modes_string }} ]
 default_mode = "{{ default_mode }}"
 
 region_packs: typing.Dict[str, RegionsData] = {

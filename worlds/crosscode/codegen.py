@@ -246,7 +246,7 @@ def generate_files() -> None:
 
     rando_data["mwconstants"] = constants
 
-    def add_item(item_id: int, item_amount: int, region_pack: str):
+    def add_item(item_id: int, item_amount: int, mode: str):
         item_info = itemdb[item_id]
         item_name = item_info["name"]["en_US"]
 
@@ -262,9 +262,9 @@ def generate_files() -> None:
 
         assert(isinstance(quantity, ast.Dict))
         try:
-            idx = list(map(lambda x: x.value, quantity.keys)).index(region_pack)
+            idx = list(map(lambda x: x.value, quantity.keys)).index(mode)
         except ValueError:
-            quantity.keys.append(ast.Constant(region_pack))
+            quantity.keys.append(ast.Constant(mode))
             quantity.values.append(ast.Constant(1))
         else:
             number = quantity.values[idx]
@@ -274,7 +274,13 @@ def generate_files() -> None:
         ast.fix_missing_locations(quantity)
 
     for idx, el in enumerate(["Heat", "Cold", "Shock", "Wave"]):
-        found_items[BASE_ID + idx] = create_ast_call_item(el, 0, 1, BASE_ID + idx, "progression")
+        item = create_ast_call_item(el, 0, 1, BASE_ID + idx, "progression")
+        for mode in rando_data["modes"]:
+            quantity = item.keywords[-1].value
+            quantity.keys.append(ast.Constant(mode))
+            quantity.values.append(ast.Constant(1))
+
+        found_items[BASE_ID + idx] = item
 
     # items_dict is a list containing objects representing maps and the Chests and Events found therein
     for dev_name, room in rando_items_dict.items():
@@ -311,8 +317,9 @@ def generate_files() -> None:
 
             code += 1
 
-            for pack in chest["condition"].keys():
-                add_item(chest["item"], chest["amount"], pack)
+            for mode, conditions in chest["condition"].items():
+                if conditions[0] not in rando_data["softLockAreas"][mode]:
+                    add_item(chest["item"], chest["amount"], mode)
 
         circuit_override_number = 1
         for events in dict.values(room["events"]):
@@ -329,8 +336,9 @@ def generate_files() -> None:
 
                 code += 1
 
-                for pack in event["condition"].keys():
-                    add_item(event["item"], event["amount"], pack)
+                for mode, conditions in event["condition"].items():
+                    if conditions[0] not in rando_data["softLockAreas"][mode]:
+                        add_item(event["item"], event["amount"], mode)
 
         if "elements" in room:
             for element in dict.values(room["elements"]):
@@ -351,8 +359,9 @@ def generate_files() -> None:
 
         code += 1
 
-        for pack in event["condition"].keys():
-            add_item(quest["item"], quest["amount"], pack)
+        for mode, conditions in quest["condition"].items():
+            if conditions[0] not in rando_data["softLockAreas"][mode]:
+                add_item(quest["item"], quest["amount"], mode)
 
     regions_seen: typing.Dict[str, typing.Set[str]] = {}
 
@@ -406,7 +415,9 @@ def generate_files() -> None:
     environment = jinja2.Environment(loader=jinja2.FileSystemLoader("templates"))
 
     common_args = {
-        "generated_comment": generated_comment
+        "generated_comment": generated_comment,
+        "modes": rando_data["modes"],
+        "default_mode": rando_data["defaultMode"],
     }
 
     ### LOCATIONS
@@ -461,14 +472,23 @@ def generate_files() -> None:
         })
 
     regions_complete = template.render(
-            modes=", ".join([f'"{m}"' for m in rando_data["modes"]]),
-            default_mode=rando_data["defaultMode"],
             region_packs=code_region_pack_list,
+            modes_string=", ".join([f'"{m}"' for m in rando_data["modes"]]),
             **common_args
     )
 
     with open("Regions.py", "w") as f:
         f.write(regions_complete)
+
+    template = environment.get_template("Options.template.py")
+    
+    options_complete = template.render(
+        mode_index=rando_data["modes"].index(rando_data["defaultMode"]),
+        **common_args
+    )
+
+    with open("Options.py", "w") as f:
+        f.write(options_complete)
 
     try:
         mkdir("data/out")

@@ -7,7 +7,7 @@ from .Items import CrossCodeItem, items_data, items_dict
 from .Locations import CrossCodeLocation, locations_data
 from .Logic import conditions_satisfied_location, conditions_satisfied_region
 from .Options import Reachability, crosscode_options
-from .Regions import RegionsData, region_packs
+from .Regions import RegionsData, region_packs, modes
 
 class CrossCodeWebWorld(WebWorld):
     theme="ocean"
@@ -59,7 +59,7 @@ class CrossCodeWorld(World):
 
     def generate_early(self):
         start_inventory = self.multiworld.start_inventory[self.player].value
-        self.logic_mode = self.multiworld.logic_mode[self.player].value
+        self.logic_mode = modes[self.multiworld.logic_mode[self.player].value]
         self.region_pack = region_packs[self.logic_mode]
 
         if self.multiworld.start_with_green_leaf_shade[self.player].value:
@@ -95,8 +95,10 @@ class CrossCodeWorld(World):
         self.multiworld.regions.append(menu_region)
 
         for name, region in self.region_dict.items():
-            region.locations = \
-                [CrossCodeLocation(self.player, data, self.logic_mode, self.region_dict) for data in locations_data if data.access[self.logic_mode].region == name]
+            region.locations = []
+            for data in locations_data:
+                if self.logic_mode in data.access and data.access[self.logic_mode].region == name:
+                    region.locations.append(CrossCodeLocation(self.player, data, self.logic_mode, self.region_dict))
 
             if name in self.region_pack.excluded_regions:
                 for location in region.locations:
@@ -112,11 +114,15 @@ class CrossCodeWorld(World):
 
         self.multiworld.completion_condition[self.player] = lambda state: state.has("Victory", self.player)
 
-        self.region_dict["32"].add_exits(["Floor ??"])
+        self.region_dict[self.region_pack.goal_region].add_exits(["Floor ??"])
 
     def create_items(self):
         exclude = self.multiworld.precollected_items[self.player][:]
+
         for data in items_data:
+            if self.logic_mode not in data.quantity:
+                continue
+
             for _ in range(data.quantity[self.logic_mode]):
                 item = CrossCodeItem(self.player, data)
                 try:

@@ -1,7 +1,4 @@
-# WARNING: THIS FILE HAS BEEN GENERATED!
-# Modifications to this file will not be kept.
-# If you need to change something here, check out codegen.py and the templates directory.
-
+{{generated_comment | indent("# ", True)}}
 
 from .Regions import modes, default_mode
 from Options import AssembleOptions, Choice, DefaultOnToggle
@@ -14,10 +11,10 @@ class LogicMode(Choice):
     [Open] (Default) Progression is based only on whether it is possible to reach area given the current list of received items.
     """
     display_name = "Logic Mode"
-    option_linear = 0
-    option_open = 1
-    
-    default = 1
+    {% for mode in modes -%}
+    option_{{mode}} = {{ loop.index0 }}
+    {% endfor %}
+    default = {{ mode_index }}
 
 class VTShadeLock(DefaultOnToggle):
     """
