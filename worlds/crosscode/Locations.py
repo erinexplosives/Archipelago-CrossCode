@@ -47,7 +47,7 @@ class CrossCodeLocation(Location):
 locations_data = [
     LocationData(name='Vermillion Wasteland - Spiral Cliff - Bronze Chest', code=300000, clearance='Bronze', kind=CHECK_CHEST, access={'linear': AccessInformation(region='22'), 'open': AccessInformation(region='open18')}),
     LocationData(name='Vermillion Wasteland - Spiral Cliff - Chest', code=300001, clearance='Default', kind=CHECK_CHEST, access={'linear': AccessInformation(region='22'), 'open': AccessInformation(region='open18')}),
-    LocationData(name='Vermillion Wasteland - Storage Basement - Chest', code=300002, clearance='Default', kind=CHECK_CHEST, access={}),
+    LocationData(name='Vermillion Wasteland - Storage Basement - Chest', code=300002, clearance='Default', kind=CHECK_CHEST, access={'linear': AccessInformation(region='22'), 'open': AccessInformation(region='open18')}),
     LocationData(name='Vermillion Wasteland - Crimson Lake - Chest 1', code=300003, clearance='Default', kind=CHECK_CHEST, access={'linear': AccessInformation(region='22'), 'open': AccessInformation(region='open18')}),
     LocationData(name='Vermillion Wasteland - Crimson Lake - Chest 2', code=300004, clearance='Default', kind=CHECK_CHEST, access={'linear': AccessInformation(region='22'), 'open': AccessInformation(region='open18')}),
     LocationData(name='Vermillion Wasteland - East Town - Silver Chest', code=300005, clearance='Silver', kind=CHECK_CHEST, access={'linear': AccessInformation(region='22'), 'open': AccessInformation(region='open18')}),

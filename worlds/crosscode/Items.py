@@ -220,7 +220,7 @@ items_data = [
     ItemData(name='Veggie Burger x4', item_id=69, amount=4, combo_id=302197, classification=ItemClassification.filler, quantity={'linear': 1, 'open': 1}),
     ItemData(name='Fruit Pie x4', item_id=72, amount=4, combo_id=302200, classification=ItemClassification.filler, quantity={'linear': 1, 'open': 1}),
     ItemData(name='Cheese Cracker x4', item_id=75, amount=4, combo_id=302203, classification=ItemClassification.filler, quantity={'linear': 1, 'open': 1}),
-    ItemData(name='Pepper Night Tea x4', item_id=79, amount=4, combo_id=302207, classification=ItemClassification.filler, quantity={'linear': 3, 'open': 3}),
+    ItemData(name='Pepper Night Tea x4', item_id=79, amount=4, combo_id=302207, classification=ItemClassification.filler, quantity={'open': 4, 'linear': 3}),
     ItemData(name='Metal Needles x4', item_id=81, amount=4, combo_id=302209, classification=ItemClassification.filler, quantity={'linear': 1, 'open': 1}),
     ItemData(name='Bovine Skin x4', item_id=82, amount=4, combo_id=302210, classification=ItemClassification.filler, quantity={'linear': 1, 'open': 1}),
     ItemData(name='Chili Dog x4', item_id=87, amount=4, combo_id=302215, classification=ItemClassification.filler, quantity={'linear': 1, 'open': 1}),
