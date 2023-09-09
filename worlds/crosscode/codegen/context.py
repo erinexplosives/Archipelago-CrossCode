@@ -4,6 +4,7 @@ from .condition import ConditionParser
 
 from .util import get_json_object
 
+
 class Context:
     rando_data: typing.Dict[str, typing.Any]
     item_data: typing.List[typing.Dict[str, typing.Any]]
@@ -21,6 +22,7 @@ class Context:
 
         self.condition_parser = ConditionParser(self.item_data)
         self.ast_generator = AstGenerator(self.condition_parser)
+
 
 def make_context_from_directory(data_dir) -> Context:
     return Context(

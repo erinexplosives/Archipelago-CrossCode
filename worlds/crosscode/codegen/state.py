@@ -6,6 +6,7 @@ from .condition import ConditionParser
 from .context import Context
 from .util import *
 
+
 class RoomInfo:
     has_fancy_name: bool
     room_name: str
@@ -27,9 +28,11 @@ class RoomInfo:
         if len(self.chests) > 1:
             for level in ["Default", "Bronze", "Silver", "Gold"]:
                 self.chest_amounts[level] = [
-                        0, 
-                        len(list(filter(lambda c: c["type"] == level, dict.values(self.chests))))
+                    0,
+                    len(list(
+                        filter(lambda c: c["type"] == level, dict.values(self.chests))))
                 ]
+
 
 class RegionMap:
     ctx: Context
@@ -53,13 +56,15 @@ class RegionMap:
         if arrow != "<->":
             raise RuntimeError(f"Area connection malformed: {ary}")
 
-        cond_elements, cond_items, _ = self.ctx.condition_parser.parse_condition_list(conditions, False)
+        cond_elements, cond_items, _ = self.ctx.condition_parser.parse_condition_list(
+            conditions, False)
 
         self.connections.append(self.ctx.ast_generator.create_ast_call_region_connection(
             region_from,
             region_to,
             cond_elements,
             cond_items))
+
 
 class GameState:
     ctx: Context
@@ -78,7 +83,7 @@ class GameState:
     region_maps: typing.Dict[str, RegionMap]
 
     def __init__(self, ctx: Context):
-        # duplicating some attributes 
+        # duplicating some attributes
         self.ctx = ctx
 
         self.ast_location_list = []
@@ -99,7 +104,8 @@ class GameState:
             else:
                 return "filler"
         else:
-            raise RuntimeError(f"I don't know how to classify this item: {item['name']}")
+            raise RuntimeError(
+                f"I don't know how to classify this item: {item['name']}")
 
     def add_item(self, item_id: int, item_amount: int, mode: str):
         item_info = self.ctx.item_data[item_id]
@@ -107,15 +113,16 @@ class GameState:
 
         item_full_name = item_name if item_amount == 1 else f"{item_name} x{item_amount}"
 
-        combo_id = BASE_ID + RESERVED_ITEM_IDS + self.ctx.num_items * (item_amount - 1) + item_id
+        combo_id = BASE_ID + RESERVED_ITEM_IDS + \
+            self.ctx.num_items * (item_amount - 1) + item_id
 
         if combo_id not in self.found_items:
             self.found_items[combo_id] = self.ctx.ast_generator.create_ast_call_item(
-                    item_full_name,
-                    item_id,
-                    item_amount,
-                    combo_id,
-                    self.get_item_classification(item_info))
+                item_full_name,
+                item_id,
+                item_amount,
+                combo_id,
+                self.get_item_classification(item_info))
 
         self.ctx.ast_generator.add_quantity(self.found_items[combo_id], mode)
 
@@ -133,7 +140,7 @@ class GameState:
 
     def add_chest(self, chest: typing.Dict[str, typing.Any], room_info: RoomInfo):
         clearance = chest["type"]
-        
+
         # this occasionally shows up.
         # it does represent a different type of chest but you don't need anything to open it
         if clearance == "MasterKey":
@@ -210,10 +217,11 @@ class GameState:
         self.ctx.rando_data["mwconstants"] = constants
 
         for idx, el in enumerate(["Heat", "Cold", "Shock", "Wave"]):
-            item = self.ctx.ast_generator.create_ast_call_item(el, 0, 1, BASE_ID + idx, "progression")
+            item = self.ctx.ast_generator.create_ast_call_item(
+                el, 0, 1, BASE_ID + idx, "progression")
             for mode in self.ctx.rando_data["modes"]:
                 quantity = item.keywords[-1].value
-                assert(isinstance(quantity, ast.Dict))
+                assert (isinstance(quantity, ast.Dict))
                 quantity.keys.append(ast.Constant(mode))
                 quantity.values.append(ast.Constant(1))
 

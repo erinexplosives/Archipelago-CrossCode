@@ -3,14 +3,16 @@ import ast
 
 from .condition import ConditionParser
 
+
 class AstGenerator:
     condition_parser: ConditionParser
+
     def __init__(self, condition_parser: ConditionParser):
         self.condition_parser = condition_parser
 
     def create_ast_call_location(
             self,
-            name: str, 
+            name: str,
             code: int,
             clearance: str,
             kind: str,
@@ -20,8 +22,9 @@ class AstGenerator:
         values: typing.List[ast.Call] = []
 
         for key, conditions in condition_lists.items():
-            cond_elements, cond_items, region = self.condition_parser.parse_condition_list(conditions)
-            
+            cond_elements, cond_items, region = self.condition_parser.parse_condition_list(
+                conditions)
+
             # working inside out here, we have to start with region.
             # then we add cond_elements and cond_items only if they are relevant
             access_info_keywords = [
@@ -171,7 +174,7 @@ class AstGenerator:
         quantity_keyword = item.keywords[-1]
         quantity = quantity_keyword.value
 
-        assert(isinstance(quantity, ast.Dict))
+        assert (isinstance(quantity, ast.Dict))
         try:
             idx = list(map(lambda x: x.value, quantity.keys)).index(mode)
         except ValueError:
@@ -179,7 +182,7 @@ class AstGenerator:
             quantity.values.append(ast.Constant(1))
         else:
             number = quantity.values[idx]
-            assert(isinstance(number, ast.Constant))
+            assert (isinstance(number, ast.Constant))
             number.value += 1
 
         ast.fix_missing_locations(quantity)

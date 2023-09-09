@@ -4,6 +4,7 @@ import ast
 COND_ELEMENT = 1
 COND_ITEM = 2
 
+
 class ConditionParser:
     item_data: typing.List[typing.Dict[str, typing.Any]]
 
@@ -31,7 +32,8 @@ class ConditionParser:
             if word_item != "item" and word_amount != "amount":
                 raise RuntimeError(f"Need `item.{number}.amount`, not `{lhs}`")
         except ValueError:
-            raise RuntimeError(f"Need three words separated by dots, not `{lhs}`")
+            raise RuntimeError(
+                f"Need three words separated by dots, not `{lhs}`")
 
         try:
             number = int(number)
@@ -45,8 +47,7 @@ class ConditionParser:
 
         return (COND_ITEM, ast.Tuple([ast.Constant(item_name), ast.Constant(amount)]))
 
-
-    def parse_condition_list(self, conditions: typing.List[str], includes_region=True) -> tuple[ast.List, ast.List, str|None]:
+    def parse_condition_list(self, conditions: typing.List[str], includes_region=True) -> tuple[ast.List, ast.List, str | None]:
         cond_elements = ast.List([])
         cond_items = ast.List([])
 
@@ -61,4 +62,3 @@ class ConditionParser:
                 cond_items.elts.append(tree)
 
         return cond_elements, cond_items, conditions[0] if includes_region else None
-

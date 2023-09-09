@@ -13,6 +13,7 @@ Modifications to this file will not be kept.
 If you need to change something here, check out codegen.py and the templates directory.
 """
 
+
 def get_json_object(filename: str):
     with open(filename, "r") as f:
         return json.load(f)
