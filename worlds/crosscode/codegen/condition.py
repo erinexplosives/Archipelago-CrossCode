@@ -11,9 +11,9 @@ class ConditionParser:
     def __init__(self, item_data):
         self.item_data = item_data
 
-    def parse_condition(self, cond: str) -> typing.Tuple[int, ast.expr]:
+    def parse_condition(self, cond: str) -> ast.Tuple:
         if cond in {"heat", "cold", "shock", "wave"}:
-            return (COND_ELEMENT, ast.Constant(f"{cond.title()}"))
+            return ast.Tuple([ast.Constant(f"{cond.title()}"), ast.Constant(1)])
 
         # This is the part of the code where I write a poor man's parser.
         # Because this data could be inputted by a user, I made it *EXTREMELY* fault-tolerant
@@ -45,20 +45,16 @@ class ConditionParser:
         except IndexError:
             raise RuntimeError(f"Item ID doesn't fit: `{number}`")
 
-        return (COND_ITEM, ast.Tuple([ast.Constant(item_name), ast.Constant(amount)]))
+        return ast.Tuple([ast.Constant(item_name), ast.Constant(amount)])
 
-    def parse_condition_list(self, conditions: typing.List[str], includes_region=True) -> tuple[ast.List, ast.List, str | None]:
-        cond_elements = ast.List([])
-        cond_items = ast.List([])
+    def parse_condition_list(self, conditions: typing.List[str], includes_region=True) -> tuple[ast.List, str | None]:
+        conds = ast.List([])
 
         start_index = 1 if includes_region else 0
 
         for cond in [x for x in conditions[start_index:] if x != ""]:
-            cond_type, tree = self.parse_condition(cond)
+            tree = self.parse_condition(cond)
+            ast.fix_missing_locations(tree)
+            conds.elts.append(tree)
 
-            if cond_type == COND_ELEMENT:
-                cond_elements.elts.append(tree)
-            elif cond_type == COND_ITEM:
-                cond_items.elts.append(tree)
-
-        return cond_elements, cond_items, conditions[0] if includes_region else None
+        return conds, conditions[0] if includes_region else None

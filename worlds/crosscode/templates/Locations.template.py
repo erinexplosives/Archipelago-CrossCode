@@ -12,8 +12,7 @@ CHECK_QUEST = 5
 
 class AccessInformation(typing.NamedTuple):
     region: str
-    cond_elements: typing.List[str] = []
-    cond_items: typing.List[typing.Tuple[str, int]] = []
+    cond: typing.List[typing.Tuple[str, int]] = []
 
 class LocationData(typing.NamedTuple):
     name: str

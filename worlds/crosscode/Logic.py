@@ -12,9 +12,7 @@ clearance_items = {
 
 def conditions_satisfied_location(player: int, mode: str, data: LocationData) -> typing.Callable[[CollectionState], bool]:
     def conditions_satisfied_internal(state: CollectionState) -> bool:
-        if not state.has_all(set(data.access[mode].cond_elements), player):
-            return False
-        if False in [state.count(item, player) >= amount for item, amount in data.access[mode].cond_items]:
+        if False in [state.count(item, player) >= amount for item, amount in data.access[mode].cond]:
             return False
         if isinstance(data, LocationData) and data.clearance != "Default":
             if not state.has(clearance_items[data.clearance], player):
@@ -25,9 +23,7 @@ def conditions_satisfied_location(player: int, mode: str, data: LocationData) ->
 
 def conditions_satisfied_region(player: int, data: RegionConnection) -> typing.Callable[[CollectionState], bool]:
     def conditions_satisfied_internal(state: CollectionState) -> bool:
-        if not state.has_all(set(data.cond_elements), player):
-            return False
-        if False in [state.count(item, player) >= amount for item, amount in data.cond_items]:
+        if False in [state.count(item, player) >= amount for item, amount in data.cond]:
             return False
         return True
 

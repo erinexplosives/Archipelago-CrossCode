@@ -6,8 +6,7 @@ from BaseClasses import Region, Entrance
 class RegionConnection(typing.NamedTuple):
     region_from: str
     region_to: str
-    cond_elements: typing.List[str]
-    cond_items: typing.List[typing.Tuple[str, int]]
+    cond: typing.List[typing.Tuple[str, int]] = []
 
 class RegionsData(typing.NamedTuple):
     starting_region: str

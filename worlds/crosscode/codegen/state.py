@@ -56,14 +56,10 @@ class RegionMap:
         if arrow != "<->":
             raise RuntimeError(f"Area connection malformed: {ary}")
 
-        cond_elements, cond_items, _ = self.ctx.condition_parser.parse_condition_list(
-            conditions, False)
-
         self.connections.append(self.ctx.ast_generator.create_ast_call_region_connection(
             region_from,
             region_to,
-            cond_elements,
-            cond_items))
+            conditions))
 
 
 class GameState:

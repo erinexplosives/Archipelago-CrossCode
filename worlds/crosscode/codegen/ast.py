@@ -22,11 +22,11 @@ class AstGenerator:
         values: typing.List[ast.Call] = []
 
         for key, conditions in condition_lists.items():
-            cond_elements, cond_items, region = self.condition_parser.parse_condition_list(
+            cond, region = self.condition_parser.parse_condition_list(
                 conditions)
 
             # working inside out here, we have to start with region.
-            # then we add cond_elements and cond_items only if they are relevant
+            # then we add cond only if it is relevant
             access_info_keywords = [
                 ast.keyword(
                     arg="region",
@@ -34,19 +34,11 @@ class AstGenerator:
                 ),
             ]
 
-            if cond_elements.elts != []:
+            if cond.elts != []:
                 access_info_keywords.append(
                     ast.keyword(
-                        arg="cond_elements",
-                        value=cond_elements
-                    )
-                )
-
-            if cond_items.elts != []:
-                access_info_keywords.append(
-                    ast.keyword(
-                        arg="cond_items",
-                        value=cond_items
+                        arg="cond",
+                        value=cond
                     )
                 )
 
@@ -138,8 +130,9 @@ class AstGenerator:
             self,
             region_from: str,
             region_to: str,
-            cond_elements,
-            cond_items) -> ast.Call:
+            conditions) -> ast.Call:
+        cond, _ = self.condition_parser.parse_condition_list(conditions, False)
+
         ast_item = ast.Call(
             func=ast.Name("RegionConnection"),
             args=[],
@@ -153,12 +146,8 @@ class AstGenerator:
                     value=ast.Constant(region_to)
                 ),
                 ast.keyword(
-                    arg="cond_elements",
-                    value=cond_elements
-                ),
-                ast.keyword(
-                    arg="cond_items",
-                    value=cond_items
+                    arg="cond",
+                    value=cond
                 ),
             ]
         )
