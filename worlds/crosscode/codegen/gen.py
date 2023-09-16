@@ -118,3 +118,6 @@ class FileGenerator:
 
         with open(f"{self.data_out_dir}/data.json", "w") as f:
             json.dump(self.ctx.rando_data, f, indent='\t')
+
+        with open(f"{self.data_out_dir}/chests.json", "w") as f:
+            json.dump(self.state.chests, f, indent='\t')

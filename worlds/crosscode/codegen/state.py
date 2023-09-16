@@ -8,6 +8,7 @@ from .util import *
 
 
 class RoomInfo:
+    dev_name: str
     has_fancy_name: bool
     room_name: str
     chests: typing.List
@@ -19,6 +20,7 @@ class RoomInfo:
     chest_amounts: typing.Dict[str, typing.List[int]]
 
     def __init__(self, dev_name: str, room: typing.Dict[str, typing.Any]):
+        self.dev_name = dev_name
         self.has_fancy_name = "name" in room
         self.room_name: str = room["name"] if self.has_fancy_name else dev_name
         self.chests = room["chests"]
@@ -39,6 +41,7 @@ class RegionMap:
 
     regions_seen: typing.Set[str]
     connections: typing.List[ast.Call]
+    chests: typing.List
     mode: str
 
     def __init__(self, mode, ctx: Context):
@@ -82,6 +85,7 @@ class GameState:
         # duplicating some attributes
         self.ctx = ctx
 
+        self.chests = []
         self.ast_location_list = []
         self.found_items = {}
         self.region_maps = {}
@@ -134,7 +138,7 @@ class GameState:
 
         self.current_code += 1
 
-    def add_chest(self, chest: typing.Dict[str, typing.Any], room_info: RoomInfo):
+    def add_chest(self, mapId: int, chest: typing.Dict[str, typing.Any], room_info: RoomInfo):
         clearance = chest["type"]
 
         # this occasionally shows up.
@@ -154,6 +158,26 @@ class GameState:
             clearance,
             "CHEST",
             chest)
+
+        conditions_full = { region: self.ctx.condition_parser.parse_condition_list(x) for region, x in chest["condition"].items()}
+
+        obj = {
+            "location": {
+                "map": room_info.dev_name,
+                "mapId": int(mapId),
+            },
+            "region": {region: cond[1] for region, cond in conditions_full.items()},
+            "reward": [["item", self.ctx.item_data[chest["item"]]["name"]["en_US"], chest["amount"]]]
+        }
+
+        for region, cond in conditions_full.items():
+            if (len(cond[0].elts) != 0):
+                if "condition" not in obj:
+                    obj["condition"] = {}
+
+                obj["condition"][region] = [["item", *[y.value for y in x.elts]] for x in cond[0].elts]
+
+        self.chests.append(obj)
 
         for mode, conditions in chest["condition"].items():
             if conditions[0] not in self.ctx.rando_data["softLockAreas"][mode]:
@@ -227,8 +251,8 @@ class GameState:
         for dev_name, room in rando_items_dict.items():
             room_info = RoomInfo(dev_name, room)
             # loop over the chests in the room
-            for chest in dict.values(room["chests"]):
-                self.add_chest(chest, room_info)
+            for mapId, chest in dict.items(room["chests"]):
+                self.add_chest(mapId, chest, room_info)
 
             for events in dict.values(room["events"]):
                 for event in events:
