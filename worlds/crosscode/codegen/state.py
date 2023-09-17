@@ -41,7 +41,7 @@ class RegionMap:
 
     regions_seen: typing.Set[str]
     connections: typing.List[ast.Call]
-    chests: typing.List
+    chests: typing.Dict[str, typing.Dict]
     mode: str
 
     def __init__(self, mode, ctx: Context):
@@ -85,7 +85,7 @@ class GameState:
         # duplicating some attributes
         self.ctx = ctx
 
-        self.chests = []
+        self.chests = {}
         self.ast_location_list = []
         self.found_items = {}
         self.region_maps = {}
@@ -177,7 +177,7 @@ class GameState:
 
                 obj["condition"][region] = [["item", *[y.value for y in x.elts]] for x in cond[0].elts]
 
-        self.chests.append(obj)
+        self.chests[location_full_name] = obj
 
         for mode, conditions in chest["condition"].items():
             if conditions[0] not in self.ctx.rando_data["softLockAreas"][mode]:
