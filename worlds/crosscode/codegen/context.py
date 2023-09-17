@@ -2,7 +2,7 @@ import typing
 from .ast import AstGenerator
 from .condition import ConditionParser
 
-from .util import get_json_object
+from .util import get_json_object, load_json_with_includes
 
 
 class Context:
@@ -26,6 +26,6 @@ class Context:
 
 def make_context_from_directory(data_dir) -> Context:
     return Context(
-        get_json_object(f"{data_dir}/data-in.json"),
+        load_json_with_includes(f"{data_dir}/in/master.json"),
         get_json_object(f"{data_dir}/assets/data/item-database.json")["items"],
         get_json_object(f"{data_dir}/assets/data/database.json"))
