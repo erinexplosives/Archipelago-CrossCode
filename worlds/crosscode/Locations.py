@@ -226,7 +226,7 @@ locations_data = [
     LocationData(name='Sapphire Ridge - Baton Pond - Bronze Chest', code=300179, clearance='Bronze', kind=CHECK_CHEST, access={'linear': AccessInformation(region='31'), 'open': AccessInformation(region='open16')}),
     LocationData(name='Maroon Valley - Mystery Cave - Gold Chest', code=300180, clearance='Gold', kind=CHECK_CHEST, access={'linear': AccessInformation(region='11'), 'open': AccessInformation(region='open5')}),
     LocationData(name='Maroon Valley - Mystery Cave - Silver Chest', code=300181, clearance='Silver', kind=CHECK_CHEST, access={'linear': AccessInformation(region='11'), 'open': AccessInformation(region='open5')}),
-    LocationData(name='Maroon Valley - Maroon Cave 1 - Chest', code=300182, clearance='Default', kind=CHECK_CHEST, access={'linear': AccessInformation(region='12'), 'open': AccessInformation(region='open6')}),
+    LocationData(name='Maroon Valley - Maroon Cave 1 - Chest', code=300182, clearance='Default', kind=CHECK_CHEST, access={'linear': AccessInformation(region='12', cond=[('Heat', 1)]), 'open': AccessInformation(region='open6', cond=[('Heat', 1)])}),
     LocationData(name='Maroon Valley - River Cliff - Chest 1', code=300183, clearance='Default', kind=CHECK_CHEST, access={'linear': AccessInformation(region='11'), 'open': AccessInformation(region='open5')}),
     LocationData(name='Maroon Valley - River Cliff - Chest 2', code=300184, clearance='Default', kind=CHECK_CHEST, access={'linear': AccessInformation(region='11'), 'open': AccessInformation(region='open5')}),
     LocationData(name='Maroon Valley - Endless Pit - Chest 1', code=300185, clearance='Default', kind=CHECK_CHEST, access={'linear': AccessInformation(region='11'), 'open': AccessInformation(region='open5')}),
