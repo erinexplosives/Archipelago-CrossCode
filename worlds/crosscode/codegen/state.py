@@ -166,6 +166,7 @@ class GameState:
                 "map": room_info.dev_name,
                 "mapId": int(mapId),
             },
+            "type": clearance,
             "region": {region: cond[1] for region, cond in conditions_full.items()},
             "reward": [["item", self.ctx.item_data[chest["item"]]["name"]["en_US"], chest["amount"]]]
         }
