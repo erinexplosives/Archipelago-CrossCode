@@ -2,37 +2,8 @@ import typing
 import ast
 
 from .ast import AstGenerator
-from .condition import ConditionParser
 from .context import Context
 from .util import *
-
-
-class RoomInfo:
-    has_fancy_name: bool
-    room_name: str
-    chests: typing.List
-    circuit_override_number: int
-
-    # stores a mapping of clearance values to [index of current chest of that clearance value, total chests of that clearance value]
-    # helps generate semantic names for chests of same clearance value in the same room
-    # so like "Bronze Chest 1" "Bronze Chest 2" etc
-    chest_amounts: typing.Dict[str, typing.List[int]]
-
-    def __init__(self, dev_name: str, room: typing.Dict[str, typing.Any]):
-        self.has_fancy_name = "name" in room
-        self.room_name: str = room["name"] if self.has_fancy_name else dev_name
-        self.chests = room["chests"]
-        self.chest_amounts = {}
-        self.circuit_override_number = 1
-
-        if len(self.chests) > 1:
-            for level in ["Default", "Bronze", "Silver", "Gold"]:
-                self.chest_amounts[level] = [
-                    0,
-                    len(list(
-                        filter(lambda c: c["type"] == level, dict.values(self.chests))))
-                ]
-
 
 class RegionMap:
     ctx: Context
@@ -76,7 +47,11 @@ class GameState:
     # also, IDs are not contiguous so we store these as a dict
     found_items: typing.Dict[int, ast.Call]
 
+    # contains information all about a specific logic pack's regions
     region_maps: typing.Dict[str, RegionMap]
+
+    # a list of *Archipelago* events (i.e. status markers)
+    ast_reward_event_list: typing.List[ast.Call]
 
     def __init__(self, ctx: Context):
         # duplicating some attributes
@@ -123,34 +98,37 @@ class GameState:
         self.ctx.ast_generator.add_quantity(self.found_items[combo_id], mode)
 
     def add_location(self, name: str, clearance: str, kind: str, check: typing.Dict[str, typing.Any]):
-        self.ast_location_list.append(self.ctx.ast_generator.create_ast_call_location(
-            name,
-            self.current_code,
-            clearance,
-            kind,
-            check["condition"]))
+        if "reward" not in check:
+            raise RuntimeError(f"Error adding location {name}: no rewards for location")
+        if not isinstance(check["reward"], list):
+            raise RuntimeError(f"Error adding location {name}: reward is not a list")
 
-        check["mwid"] = self.current_code
+        check["mwid"] = []
 
-        self.current_code += 1
+        for idx, reward in enumerate(check["reward"]):
+            full_name = name
+            if kind == "QUEST":
+                full_name += " - Reward"
+            if len(check["reward"]) > 0:
+                full_name += f" {idx + 1}"
 
-    def add_chest(self, chest: typing.Dict[str, typing.Any], room_info: RoomInfo):
+            self.ast_location_list.append(self.ctx.ast_generator.create_ast_call_location(
+                full_name,
+                self.current_code,
+                clearance,
+                kind,
+                check["region"],
+                check["condition"]))
+
+            check["mwid"].append(self.current_code)
+
+            self.current_code += 1
+
+    def add_chest(self, name: str, chest: typing.Dict[str, typing.Any]):
         clearance = chest["type"]
 
-        # this occasionally shows up.
-        # it does represent a different type of chest but you don't need anything to open it
-        if clearance == "MasterKey":
-            clearance = "Default"
-        chest_name = "Chest" if clearance == "Default" else f"{clearance} Chest"
-
-        if clearance in room_info.chest_amounts and room_info.chest_amounts[clearance][1] > 1:
-            room_info.chest_amounts[clearance][0] += 1
-            chest_name += f" {room_info.chest_amounts[clearance][0]}"
-
-        location_full_name = f"{room_info.room_name} - {chest_name}"
-
         self.add_location(
-            location_full_name,
+            name,
             clearance,
             "CHEST",
             chest)
@@ -159,31 +137,20 @@ class GameState:
             if conditions[0] not in self.ctx.rando_data["softLockAreas"][mode]:
                 self.add_item(chest["item"], chest["amount"], mode)
 
-    def add_event(self, event: typing.Dict[str, typing.Any], room_info: RoomInfo):
-        event_name = self.ctx.item_data[event["item"]]["name"]["en_US"]
-
-        location_full_name = f"{room_info.room_name} - {event_name}"
-        if event["item"] == CIRCUIT_OVERRIDE:
-            location_full_name += f" {room_info.circuit_override_number}"
-            room_info.circuit_override_number += 1
-
+    def add_cutscene(self, name: str, cutscene: typing.Dict[str, typing.Any]):
         self.add_location(
-            location_full_name,
+            name,
             "Default",
             "EVENT",
-            event)
+            cutscene)
 
-        for mode, conditions in event["condition"].items():
+        for mode, conditions in cutscene["condition"].items():
             if conditions[0] not in self.ctx.rando_data["softLockAreas"][mode]:
-                self.add_item(event["item"], event["amount"], mode)
+                self.add_item(cutscene["item"], cutscene["amount"], mode)
 
-    def add_element(self, element: typing.Dict[str, typing.Any], room_info: RoomInfo):
-        element_name = element["item"].title()
-
-        location_full_name = f"{room_info.room_name} - {element_name}"
-
+    def add_element(self, name: str, element: typing.Dict[str, typing.Any]):
         self.add_location(
-            location_full_name,
+            name,
             "Default",
             "ELEMENT",
             element)
@@ -203,8 +170,6 @@ class GameState:
                 self.add_item(quest["item"], quest["amount"], mode)
 
     def calculate_game_state(self):
-        rando_items_dict = self.ctx.rando_data["items"]
-
         constants: typing.Dict[str, typing.Any] = {
             "BASE_ID": BASE_ID,
             "BASE_NORMAL_LOCATION_ID": BASE_ID + RESERVED_ITEM_IDS
@@ -223,20 +188,14 @@ class GameState:
 
             self.found_items[BASE_ID + idx] = item
 
-        # items_dict is a list containing objects representing maps and the Chests and Events found therein
-        for dev_name, room in rando_items_dict.items():
-            room_info = RoomInfo(dev_name, room)
-            # loop over the chests in the room
-            for chest in dict.values(room["chests"]):
-                self.add_chest(chest, room_info)
+        for name, chest in self.ctx.rando_data["chests"].items():
+            self.add_chest(name, chest)
 
-            for events in dict.values(room["events"]):
-                for event in events:
-                    self.add_event(event, room_info)
+        for name, cutscene in self.ctx.rando_data["cutscenes"].items():
+            self.add_cutscene(name, cutscene)
 
-            if "elements" in room:
-                for element in dict.values(room["elements"]):
-                    self.add_element(element, room_info)
+        for name, element in self.ctx.rando_data["elements"].items():
+            self.add_element(name, element)
 
         for dev_name, quest in dict.items(self.ctx.rando_data["quests"]):
             self.add_quest(dev_name, quest)

@@ -10,33 +10,36 @@ CHECK_EVENT = 3
 CHECK_SHOP = 4
 CHECK_QUEST = 5
 
-class AccessInformation(typing.NamedTuple):
-    region: str
-    cond: typing.List[typing.Tuple[str, int]] = []
+class Condition(typing.NamedTuple):
+    cutscenes: typing.List[str] = []
+    items: typing.List[typing.Tuple[str, int]] = []
+    quests: typing.List[str] = []
+    regions: typing.List[str] = []
 
 class LocationData(typing.NamedTuple):
     name: str
     code: int
-    access: typing.Dict[str, AccessInformation]
+    region: typing.Dict[str, str]
+    condition: Condition
     clearance: str = "Default"
     kind: int = CHECK_CHEST
 
 class CrossCodeLocation(Location):
     game: str = "CrossCode"
     data: LocationData
-    access: AccessInformation
+    region: str
 
     def __init__(self, player: int, data: LocationData, mode, region_dict: dict[str, Region]):
         super(CrossCodeLocation, self).__init__(
             player,
             data.name,
             data.code,
-            region_dict[data.access[mode].region]
+            region_dict[data.region[mode]]
         )
 
         self.data = data
         self.event = False
-        self.access = data.access[mode]
+        self.region = data.region[mode]
 
 # GENERATED CODE
 # DO NOT TOUCH

@@ -1,14 +1,53 @@
 import typing
 import ast
 
-from .condition import ConditionParser
-
 
 class AstGenerator:
-    condition_parser: ConditionParser
+    def create_ast_call_condition(self, conditions: typing.List[typing.List[str]]) -> ast.Call:
+        cutscenes = []
+        items = []
+        quests = []
+        regions = []
 
-    def __init__(self, condition_parser: ConditionParser):
-        self.condition_parser = condition_parser
+        for cond in conditions:
+            if not isinstance(cond, list):
+                raise RuntimeError(f"Error parsing condition '{cond}': not a list")
+
+            if cond[0] == "item":
+                items.append(cond[1:])
+                continue
+
+            target_list = None
+            if cond[0] == "cutscene":
+                target_list = cutscenes
+            if cond[0] == "quest":
+                target_list = quests
+            if cond[0] == "region":
+                target_list = regions
+
+            if (target_list == None):
+                raise RuntimeError(f"Error parsing condition '{cond}': invalid condition type")
+            target_list.append(cond[1])
+
+        result = ast.Call(
+            func=ast.Name("Condition"),
+            args=[],
+            keywords=[
+                ast.keyword(
+                    "cutscenes",
+                    [ ast.Constant(s) for s in cutscenes]),
+                ast.keyword(
+                    "items",
+                    [ ast.Tuple([ast.Constant(s), ast.Constant(i)]) for s, i in items]),
+                ast.keyword(
+                    "quests",
+                    [ ast.Constant(s) for s in quests]),
+                ast.keyword(
+                    "regions",
+                    [ ast.Constant(s) for s in regions]),
+                ])
+
+        return result
 
     def create_ast_call_location(
             self,
@@ -16,40 +55,15 @@ class AstGenerator:
             code: int,
             clearance: str,
             kind: str,
-            condition_lists: typing.Dict[str, typing.List[str]]
+            region: typing.Dict[str, str],
+            conditions: typing.List[typing.List[str]]
     ) -> ast.Call:
         keys: typing.List[ast.Constant] = []
-        values: typing.List[ast.Call] = []
+        values: typing.List[ast.Constant] = []
 
-        for key, conditions in condition_lists.items():
-            cond, region = self.condition_parser.parse_condition_list(
-                conditions)
-
-            # working inside out here, we have to start with region.
-            # then we add cond only if it is relevant
-            access_info_keywords = [
-                ast.keyword(
-                    arg="region",
-                    value=ast.Constant(region)
-                ),
-            ]
-
-            if cond.elts != []:
-                access_info_keywords.append(
-                    ast.keyword(
-                        arg="cond",
-                        value=cond
-                    )
-                )
-
-            access_info = ast.Call(
-                func=ast.Name("AccessInformation"),
-                args=[],
-                keywords=access_info_keywords,
-            )
-
-            keys.append(ast.Constant(key))
-            values.append(access_info)
+        for k, v in region.values():
+            keys.append(ast.Constant(k))
+            values.append(ast.Constant(v))
 
         ast_item = ast.Call(
             func=ast.Name("LocationData"),
@@ -64,6 +78,17 @@ class AstGenerator:
                     value=ast.Constant(code)
                 ),
                 ast.keyword(
+                    arg="region",
+                    value=ast.Dict(
+                        keys=keys,
+                        values=values
+                    )
+                ),
+                ast.keyword(
+                    arg="condition",
+                    value=self.create_ast_call_condition(conditions)
+                ),
+                ast.keyword(
                     arg="clearance",
                     value=ast.Constant(clearance)
                 ),
@@ -71,17 +96,47 @@ class AstGenerator:
                     arg="kind",
                     value=ast.Name(f"CHECK_{kind}"),
                 ),
-                ast.keyword(
-                    arg="access",
-                    value=ast.Dict(
-                        keys=keys,
-                        values=values
-                    )
-                ),
             ]
         )
         ast.fix_missing_locations(ast_item)
         return ast_item
+
+    # def create_ast_call_event(
+    #         self,
+    #         name: str,
+    #         locations: typing.List[str]
+    # ) -> ast.Call:
+    #     ast_item = ast.Call(
+    #         func=ast.Name("EventData"),
+    #         args=[],
+    #         keywords=[
+    #             ast.keyword(
+    #                 arg="name",
+    #                 value=ast.Constant(name)
+    #             ),
+    #             ast.keyword(
+    #                 arg="code",
+    #                 value=ast.Constant(code)
+    #             ),
+    #             ast.keyword(
+    #                 arg="clearance",
+    #                 value=ast.Constant(clearance)
+    #             ),
+    #             ast.keyword(
+    #                 arg="kind",
+    #                 value=ast.Name(f"CHECK_{kind}"),
+    #             ),
+    #             ast.keyword(
+    #                 arg="access",
+    #                 value=ast.Dict(
+    #                     keys=keys,
+    #                     values=values
+    #                 )
+    #             ),
+    #         ]
+    #     )
+    #     ast.fix_missing_locations(ast_item)
+    #     return ast_item
 
     def create_ast_call_item(
             self,

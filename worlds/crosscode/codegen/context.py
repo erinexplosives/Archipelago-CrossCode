@@ -1,6 +1,5 @@
 import typing
 from .ast import AstGenerator
-from .condition import ConditionParser
 
 from .util import get_json_object, load_json_with_includes
 
@@ -11,7 +10,6 @@ class Context:
     database: typing.Dict[str, typing.Any]
     num_items: int
 
-    condition_parser: ConditionParser
     ast_generator: AstGenerator
 
     def __init__(self, rando_data, item_data, database):
@@ -20,8 +18,7 @@ class Context:
         self.database = database
         self.num_items = len(self.item_data)
 
-        self.condition_parser = ConditionParser(self.item_data)
-        self.ast_generator = AstGenerator(self.condition_parser)
+        self.ast_generator = AstGenerator()
 
 
 def make_context_from_directory(data_dir) -> Context:
