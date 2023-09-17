@@ -254,9 +254,10 @@ class GameState:
             for mapId, chest in dict.items(room["chests"]):
                 self.add_chest(mapId, chest, room_info)
 
-            for events in dict.values(room["events"]):
-                for event in events:
-                    self.add_event(event, room_info)
+            if "events" in room:
+                for events in dict.values(room["events"]):
+                    for event in events:
+                        self.add_event(event, room_info)
 
             if "elements" in room:
                 for element in dict.values(room["elements"]):
