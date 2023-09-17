@@ -173,10 +173,14 @@ class GameState:
 
         for region, cond in conditions_full.items():
             if (len(cond[0].elts) != 0):
-                if "condition" not in obj:
-                    obj["condition"] = {}
+                for x in cond[0].elts:
+                    val = ["item", *[y.value for y in x.elts]]
 
-                obj["condition"][region] = [["item", *[y.value for y in x.elts]] for x in cond[0].elts]
+                    if not "condition" in obj:
+                        obj["condition"] = []
+
+                    if not val in obj["condition"]:
+                        obj["condition"].append(val)
 
         self.chests[location_full_name] = obj
 
