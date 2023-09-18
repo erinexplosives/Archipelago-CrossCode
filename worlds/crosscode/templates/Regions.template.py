@@ -3,10 +3,12 @@
 import typing
 from BaseClasses import Region, Entrance
 
+from .Locations import Condition
+
 class RegionConnection(typing.NamedTuple):
     region_from: str
     region_to: str
-    cond: typing.List[typing.Tuple[str, int]] = []
+    cond: Condition
 
 class RegionsData(typing.NamedTuple):
     starting_region: str

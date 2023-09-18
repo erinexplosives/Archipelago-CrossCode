@@ -99,7 +99,8 @@ class GameState:
 
     def add_location(self, name: str, clearance: str, kind: str, check: typing.Dict[str, typing.Any]):
         if "reward" not in check:
-            raise RuntimeError(f"Error adding location {name}: no rewards for location")
+            return
+            # raise RuntimeError(f"Error adding location {name}: no rewards for location")
         if not isinstance(check["reward"], list):
             raise RuntimeError(f"Error adding location {name}: reward is not a list")
 
@@ -118,7 +119,7 @@ class GameState:
                 clearance,
                 kind,
                 check["region"],
-                check["condition"]))
+                check["condition"] if "condition" in check else []))
 
             check["mwid"].append(self.current_code)
 
@@ -133,20 +134,20 @@ class GameState:
             "CHEST",
             chest)
 
-        for mode, conditions in chest["condition"].items():
-            if conditions[0] not in self.ctx.rando_data["softLockAreas"][mode]:
-                self.add_item(chest["item"], chest["amount"], mode)
+        # for mode, conditions in chest["condition"].items():
+        #     if conditions[0] not in self.ctx.rando_data["softLockAreas"][mode]:
+        #         self.add_item(chest["item"], chest["amount"], mode)
 
     def add_cutscene(self, name: str, cutscene: typing.Dict[str, typing.Any]):
         self.add_location(
             name,
             "Default",
-            "EVENT",
+            "CUTSCENE",
             cutscene)
 
-        for mode, conditions in cutscene["condition"].items():
-            if conditions[0] not in self.ctx.rando_data["softLockAreas"][mode]:
-                self.add_item(cutscene["item"], cutscene["amount"], mode)
+        # for mode, conditions in cutscene["condition"].items():
+        #     if conditions[0] not in self.ctx.rando_data["softLockAreas"][mode]:
+        #         self.add_item(cutscene["item"], cutscene["amount"], mode)
 
     def add_element(self, name: str, element: typing.Dict[str, typing.Any]):
         self.add_location(
@@ -155,19 +156,16 @@ class GameState:
             "ELEMENT",
             element)
 
-    def add_quest(self, dev_name: str, quest: typing.Dict[str, typing.Any]):
-        data = self.ctx.database["quests"][dev_name]
-        location_name = data["name"]["en_US"]
-
+    def add_quest(self, name: str, quest: typing.Dict[str, typing.Any]):
         self.add_location(
-            location_name,
+            name,
             "Default",
             "QUEST",
             quest)
 
-        for mode, conditions in quest["condition"].items():
-            if conditions[0] not in self.ctx.rando_data["softLockAreas"][mode]:
-                self.add_item(quest["item"], quest["amount"], mode)
+        # for mode, conditions in quest["condition"].items():
+        #     if conditions[0] not in self.ctx.rando_data["softLockAreas"][mode]:
+        #         self.add_item(quest["item"], quest["amount"], mode)
 
     def calculate_game_state(self):
         constants: typing.Dict[str, typing.Any] = {

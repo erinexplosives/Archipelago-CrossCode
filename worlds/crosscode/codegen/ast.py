@@ -33,20 +33,24 @@ class AstGenerator:
             func=ast.Name("Condition"),
             args=[],
             keywords=[
-                ast.keyword(
-                    "cutscenes",
-                    [ ast.Constant(s) for s in cutscenes]),
-                ast.keyword(
-                    "items",
-                    [ ast.Tuple([ast.Constant(s), ast.Constant(i)]) for s, i in items]),
-                ast.keyword(
-                    "quests",
-                    [ ast.Constant(s) for s in quests]),
-                ast.keyword(
-                    "regions",
-                    [ ast.Constant(s) for s in regions]),
                 ])
 
+        if len(cutscenes) < 1:
+            result.keywords.append(ast.keyword(
+                "cutscenes",
+                [ ast.Constant(s) for s in cutscenes]))
+        if len(items) < 1:
+            result.keywords.append(ast.keyword(
+                "items",
+                [ ast.Tuple([ast.Constant(s), ast.Constant(i)]) for s, i in items]))
+        if len(quests) < 1:
+            result.keywords.append(ast.keyword(
+                "quests",
+                [ ast.Constant(s) for s in quests]))
+        if len(regions) < 1:
+            result.keywords.append(ast.keyword(
+                "regions",
+                [ ast.Constant(s) for s in regions]))
         return result
 
     def create_ast_call_location(
@@ -61,7 +65,7 @@ class AstGenerator:
         keys: typing.List[ast.Constant] = []
         values: typing.List[ast.Constant] = []
 
-        for k, v in region.values():
+        for k, v in region.items():
             keys.append(ast.Constant(k))
             values.append(ast.Constant(v))
 
@@ -186,7 +190,6 @@ class AstGenerator:
             region_from: str,
             region_to: str,
             conditions) -> ast.Call:
-        cond, _ = self.condition_parser.parse_condition_list(conditions, False)
 
         ast_item = ast.Call(
             func=ast.Name("RegionConnection"),
@@ -202,7 +205,7 @@ class AstGenerator:
                 ),
                 ast.keyword(
                     arg="cond",
-                    value=cond
+                    value=self.create_ast_call_condition(conditions)
                 ),
             ]
         )

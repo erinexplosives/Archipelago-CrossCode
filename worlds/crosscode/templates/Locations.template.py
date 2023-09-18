@@ -6,7 +6,7 @@ from BaseClasses import Location, Region
 # Types of Check
 CHECK_ELEMENT = 1
 CHECK_CHEST = 2
-CHECK_EVENT = 3
+CHECK_CUTSCENE = 3
 CHECK_SHOP = 4
 CHECK_QUEST = 5
 
@@ -20,7 +20,7 @@ class LocationData(typing.NamedTuple):
     name: str
     code: int
     region: typing.Dict[str, str]
-    condition: Condition
+    cond: Condition
     clearance: str = "Default"
     kind: int = CHECK_CHEST
 
