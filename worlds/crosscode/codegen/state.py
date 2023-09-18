@@ -43,12 +43,14 @@ class RegionMap:
     connections: typing.List[ast.Call]
     chests: typing.Dict[str, typing.Dict]
     mode: str
+    new_connections: typing.List[typing.Dict[str, typing.Any]]
 
     def __init__(self, mode, ctx: Context):
         self.ctx = ctx
         self.mode = mode
         self.regions_seen = set()
         self.connections = []
+        self.new_connections = []
 
     def add_region_connection(self, ary):
         region_from, arrow, region_to, *conditions = ary
@@ -63,6 +65,24 @@ class RegionMap:
             region_from,
             region_to,
             conditions))
+
+        conditions, _ = self.ctx.condition_parser.parse_condition_list(conditions, includes_region=False)
+
+        obj = {
+            "from": region_from,
+            "to": region_to,
+            }
+
+        for x in conditions.elts:
+            val = ["item", *[y.value for y in x.elts]]
+
+            if not "condition" in obj:
+                obj["condition"] = []
+
+            if not val in obj["condition"]:
+                obj["condition"].append(val)
+
+        self.new_connections.append(obj)
 
 
 class GameState:

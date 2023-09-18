@@ -121,3 +121,6 @@ class FileGenerator:
 
         with open(f"{self.data_out_dir}/chests.json", "w") as f:
             json.dump({"chests": self.state.chests}, f, indent='\t')
+
+        with open(f"{self.data_out_dir}/regions.json", "w") as f:
+            json.dump({"regions": {name: rm.new_connections for name, rm in self.state.region_maps.items()}}, f, indent='\t')
