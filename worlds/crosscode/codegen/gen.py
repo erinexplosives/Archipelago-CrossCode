@@ -79,14 +79,14 @@ class FileGenerator:
             code_region_connections = ",\n".join(code_region_connections)
 
             code_excluded_regions = ast.unparse(
-                ast.List([ast.Constant(x) for x in self.ctx.rando_data["softLockAreas"]]))
+                ast.List([ast.Constant(x) for x in self.ctx.rando_data["excludedRegions"]]))
 
             code_region_pack_list.append({
                 "name": mode,
                 "region_list": code_region_list,
                 "region_connections": code_region_connections,
-                "starting_region": self.ctx.rando_data["startingArea"][mode],
-                "goal_region": self.ctx.rando_data["goalArea"][mode],
+                "starting_region": self.ctx.rando_data["startingRegion"][mode],
+                "goal_region": self.ctx.rando_data["goalRegion"][mode],
                 "excluded_regions": code_excluded_regions
             })
 

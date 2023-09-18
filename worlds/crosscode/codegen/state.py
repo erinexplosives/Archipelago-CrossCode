@@ -18,19 +18,14 @@ class RegionMap:
         self.regions_seen = set()
         self.connections = []
 
-    def add_region_connection(self, ary):
-        region_from, arrow, region_to, *conditions = ary
-
-        self.regions_seen.add(region_from)
-        self.regions_seen.add(region_to)
-
-        if arrow != "<->":
-            raise RuntimeError(f"Area connection malformed: {ary}")
+    def add_region_connection(self, conn: typing.Dict[str, typing.Any]):
+        self.regions_seen.add(conn["from"])
+        self.regions_seen.add(conn["to"])
 
         self.connections.append(self.ctx.ast_generator.create_ast_call_region_connection(
-            region_from,
-            region_to,
-            conditions))
+            conn["from"],
+            conn["to"],
+            conn["condition"] if "condition" in conn else []))
 
 
 class GameState:
@@ -78,11 +73,11 @@ class GameState:
             raise RuntimeError(
                 f"I don't know how to classify this item: {item['name']}")
 
-    def add_item(self, item_id: int, item_amount: int, mode: str):
-        item_info = self.ctx.item_data[item_id]
-        item_name = item_info["name"]["en_US"]
-
+    def add_item(self, item_name: str, item_amount: int, mode: str):
         item_full_name = item_name if item_amount == 1 else f"{item_name} x{item_amount}"
+        item_id = self.ctx.rando_data["items"][item_name]["id"]
+
+        item_info = self.ctx.item_data[item_id]
 
         combo_id = BASE_ID + RESERVED_ITEM_IDS + \
             self.ctx.num_items * (item_amount - 1) + item_id
@@ -97,21 +92,28 @@ class GameState:
 
         self.ctx.ast_generator.add_quantity(self.found_items[combo_id], mode)
 
-    def add_location(self, name: str, clearance: str, kind: str, check: typing.Dict[str, typing.Any]):
-        if "reward" not in check:
-            return
-            # raise RuntimeError(f"Error adding location {name}: no rewards for location")
-        if not isinstance(check["reward"], list):
-            raise RuntimeError(f"Error adding location {name}: reward is not a list")
+    def add_reward(self, ary: typing.List, mode: str):
+        kind, *info = ary
 
+        if kind == "item":
+            if len(info) == 1:
+                self.add_item(info[0], 1, mode)
+            elif len(info) == 2:
+                self.add_item(info[0], info[1], mode)
+            else:
+                raise RuntimeError(f"Error parsing reward {ary}: expected one or two elements")
+
+    def add_location(self, name: str, clearance: str, kind: str, check: typing.Dict[str, typing.Any]):
         check["mwid"] = []
 
-        for idx, reward in enumerate(check["reward"]):
+        num_rewards = 1
+        if "reward" in check:
+            num_rewards = len(check["reward"])
+
+        for idx in range(num_rewards):
             full_name = name
-            if kind == "QUEST":
-                full_name += " - Reward"
-            if len(check["reward"]) > 0:
-                full_name += f" {idx + 1}"
+            if "reward" in check and len(check["reward"]) > 1:
+                full_name += f" - Reward {idx + 1}"
 
             self.ast_location_list.append(self.ctx.ast_generator.create_ast_call_location(
                 full_name,
@@ -125,8 +127,17 @@ class GameState:
 
             self.current_code += 1
 
+        if "reward" not in check:
+            return
+        if not isinstance(check["reward"], list):
+            raise RuntimeError(f"Error adding rewards for location {name}: reward is not a list")
+
+        for mode in check["region"]:
+            for reward in check["reward"]:
+                self.add_reward(reward, mode)
+
     def add_chest(self, name: str, chest: typing.Dict[str, typing.Any]):
-        clearance = chest["type"]
+        clearance = chest["clearance"]
 
         self.add_location(
             name,
@@ -198,7 +209,7 @@ class GameState:
         for dev_name, quest in dict.items(self.ctx.rando_data["quests"]):
             self.add_quest(dev_name, quest)
 
-        for mode, regions in self.ctx.rando_data["areas"].items():
+        for mode, regions in self.ctx.rando_data["regions"].items():
             region_map = RegionMap(mode, self.ctx)
             for connection in regions:
                 region_map.add_region_connection(connection)

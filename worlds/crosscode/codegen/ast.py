@@ -14,7 +14,10 @@ class AstGenerator:
                 raise RuntimeError(f"Error parsing condition '{cond}': not a list")
 
             if cond[0] == "item":
-                items.append(cond[1:])
+                if len(cond) == 2:
+                    items.append([cond[1], 1])
+                else:
+                    items.append(cond[1:])
                 continue
 
             target_list = None
@@ -35,22 +38,22 @@ class AstGenerator:
             keywords=[
                 ])
 
-        if len(cutscenes) < 1:
+        if len(cutscenes) >= 1:
             result.keywords.append(ast.keyword(
                 "cutscenes",
-                [ ast.Constant(s) for s in cutscenes]))
-        if len(items) < 1:
+                ast.List([ ast.Constant(s) for s in cutscenes])))
+        if len(items) >= 1:
             result.keywords.append(ast.keyword(
                 "items",
-                [ ast.Tuple([ast.Constant(s), ast.Constant(i)]) for s, i in items]))
-        if len(quests) < 1:
+                ast.List([ ast.Tuple([ast.Constant(s), ast.Constant(i)]) for s, i in items])))
+        if len(quests) >= 1:
             result.keywords.append(ast.keyword(
                 "quests",
-                [ ast.Constant(s) for s in quests]))
-        if len(regions) < 1:
+                ast.List([ ast.Constant(s) for s in quests])))
+        if len(regions) >= 1:
             result.keywords.append(ast.keyword(
                 "regions",
-                [ ast.Constant(s) for s in regions]))
+                ast.List([ ast.Constant(s) for s in regions])))
         return result
 
     def create_ast_call_location(
@@ -191,7 +194,7 @@ class AstGenerator:
             region_to: str,
             conditions) -> ast.Call:
 
-        ast_item = ast.Call(
+        ast_region = ast.Call(
             func=ast.Name("RegionConnection"),
             args=[],
             keywords=[
@@ -210,9 +213,9 @@ class AstGenerator:
             ]
         )
 
-        ast.fix_missing_locations(ast_item)
+        ast.fix_missing_locations(ast_region)
 
-        return ast_item
+        return ast_region
 
     def add_quantity(
             self,
