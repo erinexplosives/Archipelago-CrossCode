@@ -4,7 +4,7 @@ from worlds.AutoWorld import WebWorld, World
 from worlds.generic.Rules import add_rule, set_rule
 from .Common import *
 from .Items import CrossCodeItem, items_data, items_dict
-from .Locations import CrossCodeLocation, locations_data
+from .Locations import CrossCodeLocation, locations_data, events_data
 from .Logic import condition_satisfied, has_clearance
 from .Options import Reachability, crosscode_options
 from .Regions import RegionsData, region_packs, modes
@@ -99,6 +99,12 @@ class CrossCodeWorld(World):
             for data in locations_data:
                 if self.logic_mode in data.region and data.region[self.logic_mode] == name:
                     region.locations.append(CrossCodeLocation(self.player, data, self.logic_mode, self.region_dict))
+
+            for data in events_data:
+                if self.logic_mode in data.region and data.region[self.logic_mode] == name:
+                    location = CrossCodeLocation(self.player, data, self.logic_mode, self.region_dict)
+                    region.locations.append(location)
+                    location.place_locked_item(Item(location.data.name, ItemClassification.progression, None, self.player))
 
             if name in self.region_pack.excluded_regions:
                 for location in region.locations:

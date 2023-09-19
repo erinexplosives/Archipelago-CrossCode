@@ -14,9 +14,9 @@ def condition_satisfied(player: int, condition: Condition) -> typing.Callable[[C
     def conditions_satisfied_internal(state: CollectionState) -> bool:
         if False in [state.count(item, player) >= amount for item, amount in condition.items]:
             return False
-        if False in [state.can_reach(location, player=player) for location in condition.locations]:
+        if False in [state.can_reach(location, "Location", player) for location in condition.locations]:
             return False
-        if False in [state.can_reach(location, player=player) for location in condition.regions]:
+        if False in [state.can_reach(region, "Region", player) for region in condition.regions]:
             return False
         return True
 
