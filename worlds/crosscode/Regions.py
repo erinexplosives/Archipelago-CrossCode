@@ -187,7 +187,7 @@ region_packs: typing.Dict[str, RegionsData] = {
             RegionConnection(region_from='open16', region_to='open17', cond=Condition(items=[('Old Dojo Key', 1)])),
             RegionConnection(region_from='open16', region_to='open16.1', cond=Condition(items=[('Meteor Shade', 1), ('Shock', 1)])),
             RegionConnection(region_from='open16', region_to='open18', cond=Condition()),
-            RegionConnection(region_from='open16.1', region_to='open19', cond=Condition(items=[('Heat', 1), ('Cold', 1), ('Shock', 1), ('Wave', 1)], locations=['Temple Mine Shade Statue', "Faj'ro Shade Statue", "Zir'vitar Shade Statue", "So'najiz Mine Shade Statue"]))
+            RegionConnection(region_from='open16.1', region_to='open19', cond=Condition(items=[('Heat', 1), ('Cold', 1), ('Shock', 1), ('Wave', 1)], locations=['Temple Mine Shade Statue', "Faj'ro Shade Statue", "Zir'vitar Shade Statue", "So'najiz Shade Statue"]))
         ]
     ),
     
