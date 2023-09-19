@@ -4,9 +4,8 @@ import ast
 
 class AstGenerator:
     def create_ast_call_condition(self, conditions: typing.List[typing.List[str]]) -> ast.Call:
-        cutscenes = []
         items = []
-        quests = []
+        locations = []
         regions = []
 
         for cond in conditions:
@@ -21,10 +20,8 @@ class AstGenerator:
                 continue
 
             target_list = None
-            if cond[0] == "cutscene":
-                target_list = cutscenes
-            if cond[0] == "quest":
-                target_list = quests
+            if cond[0] in ["cutscene", "quest", "location"]:
+                target_list = locations
             if cond[0] == "region":
                 target_list = regions
 
@@ -38,18 +35,14 @@ class AstGenerator:
             keywords=[
                 ])
 
-        if len(cutscenes) >= 1:
-            result.keywords.append(ast.keyword(
-                "cutscenes",
-                ast.List([ ast.Constant(s) for s in cutscenes])))
         if len(items) >= 1:
             result.keywords.append(ast.keyword(
                 "items",
                 ast.List([ ast.Tuple([ast.Constant(s), ast.Constant(i)]) for s, i in items])))
-        if len(quests) >= 1:
+        if len(locations) >= 1:
             result.keywords.append(ast.keyword(
-                "quests",
-                ast.List([ ast.Constant(s) for s in quests])))
+                "locations",
+                ast.List([ ast.Constant(s) for s in locations])))
         if len(regions) >= 1:
             result.keywords.append(ast.keyword(
                 "regions",
@@ -59,9 +52,8 @@ class AstGenerator:
     def create_ast_call_location(
             self,
             name: str,
-            code: int,
+            code: int | None,
             clearance: str,
-            kind: str,
             region: typing.Dict[str, str],
             conditions: typing.List[typing.List[str]]
     ) -> ast.Call:
@@ -91,59 +83,23 @@ class AstGenerator:
                         values=values
                     )
                 ),
-                ast.keyword(
-                    arg="condition",
-                    value=self.create_ast_call_condition(conditions)
-                ),
-                ast.keyword(
-                    arg="clearance",
-                    value=ast.Constant(clearance)
-                ),
-                ast.keyword(
-                    arg="kind",
-                    value=ast.Name(f"CHECK_{kind}"),
-                ),
             ]
         )
+
+        if len(conditions) > 0:
+            ast_item.keywords.append(ast.keyword(
+                arg="cond",
+                value=self.create_ast_call_condition(conditions)
+            ))
+
+        if clearance != "Default":
+            ast_item.keywords.append(ast.keyword(
+                arg="clearance",
+                value=ast.Constant(clearance)
+            ))
+
         ast.fix_missing_locations(ast_item)
         return ast_item
-
-    # def create_ast_call_event(
-    #         self,
-    #         name: str,
-    #         locations: typing.List[str]
-    # ) -> ast.Call:
-    #     ast_item = ast.Call(
-    #         func=ast.Name("EventData"),
-    #         args=[],
-    #         keywords=[
-    #             ast.keyword(
-    #                 arg="name",
-    #                 value=ast.Constant(name)
-    #             ),
-    #             ast.keyword(
-    #                 arg="code",
-    #                 value=ast.Constant(code)
-    #             ),
-    #             ast.keyword(
-    #                 arg="clearance",
-    #                 value=ast.Constant(clearance)
-    #             ),
-    #             ast.keyword(
-    #                 arg="kind",
-    #                 value=ast.Name(f"CHECK_{kind}"),
-    #             ),
-    #             ast.keyword(
-    #                 arg="access",
-    #                 value=ast.Dict(
-    #                     keys=keys,
-    #                     values=values
-    #                 )
-    #             ),
-    #         ]
-    #     )
-    #     ast.fix_missing_locations(ast_item)
-    #     return ast_item
 
     def create_ast_call_item(
             self,

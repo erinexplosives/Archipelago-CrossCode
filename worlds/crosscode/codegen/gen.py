@@ -39,9 +39,13 @@ class FileGenerator:
 
         code_location_list = [ast.unparse(item)
                               for item in self.state.ast_location_list]
-        code = ",\n".join(code_location_list)
+        code_locations_data = ",\n".join(code_location_list)
+
+        code_event_list = [ast.unparse(item)
+                              for item in self.state.ast_event_list]
+        code_events_data = ",\n".join(code_event_list)
         locations_complete = template.render(
-            locations_data=code, **self.common_args)
+            locations_data=code_locations_data, events_data=code_events_data, **self.common_args)
 
         with open("Locations.py", "w") as f:
             f.write(locations_complete)

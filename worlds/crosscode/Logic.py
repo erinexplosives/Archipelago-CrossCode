@@ -1,6 +1,6 @@
 import typing
 from BaseClasses import CollectionState
-from .Locations import LocationData
+from .Locations import Condition, LocationData
 from .Regions import RegionConnection
 
 # this is uncharacteristic of me, but i'm hardcoding something here. weird.
@@ -10,21 +10,17 @@ clearance_items = {
     "Gold": "Radiant Key",
 }
 
-def conditions_satisfied_location(player: int, mode: str, data: LocationData) -> typing.Callable[[CollectionState], bool]:
+def condition_satisfied(player: int, condition: Condition) -> typing.Callable[[CollectionState], bool]:
     def conditions_satisfied_internal(state: CollectionState) -> bool:
-        if False in [state.count(item, player) >= amount for item, amount in data.access[mode].cond]:
+        if False in [state.count(item, player) >= amount for item, amount in condition.items]:
             return False
-        if isinstance(data, LocationData) and data.clearance != "Default":
-            if not state.has(clearance_items[data.clearance], player):
-                return False
-        return True
-
-    return conditions_satisfied_internal
-
-def conditions_satisfied_region(player: int, data: RegionConnection) -> typing.Callable[[CollectionState], bool]:
-    def conditions_satisfied_internal(state: CollectionState) -> bool:
-        if False in [state.count(item, player) >= amount for item, amount in data.cond]:
+        if False in [state.can_reach(location, player=player) for location in condition.locations]:
+            return False
+        if False in [state.can_reach(location, player=player) for location in condition.regions]:
             return False
         return True
 
     return conditions_satisfied_internal
+
+def has_clearance(player: int, clearance: str) -> typing.Callable[[CollectionState], bool]:
+    return lambda state: state.has(clearance_items[clearance], player)

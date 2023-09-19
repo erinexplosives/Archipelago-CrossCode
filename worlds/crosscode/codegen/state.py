@@ -38,6 +38,11 @@ class GameState:
     # so I do some steps manually
     ast_location_list: typing.List[ast.Call]
 
+    # same thing as ast_location_list except it's just for events
+    # events are automatically created for quests with multiple rewards
+    # this is so that they can have an easily-named location to call
+    ast_event_list: typing.List[ast.Call]
+
     # similar but for items
     # also, IDs are not contiguous so we store these as a dict
     found_items: typing.Dict[int, ast.Call]
@@ -45,14 +50,12 @@ class GameState:
     # contains information all about a specific logic pack's regions
     region_maps: typing.Dict[str, RegionMap]
 
-    # a list of *Archipelago* events (i.e. status markers)
-    ast_reward_event_list: typing.List[ast.Call]
-
     def __init__(self, ctx: Context):
         # duplicating some attributes
         self.ctx = ctx
 
         self.ast_location_list = []
+        self.ast_event_list = []
         self.found_items = {}
         self.region_maps = {}
 
@@ -103,29 +106,40 @@ class GameState:
             else:
                 raise RuntimeError(f"Error parsing reward {ary}: expected one or two elements")
 
-    def add_location(self, name: str, clearance: str, kind: str, check: typing.Dict[str, typing.Any]):
+    def add_location(self, name: str, clearance: str, check: typing.Dict[str, typing.Any]):
         check["mwid"] = []
 
         num_rewards = 1
         if "reward" in check:
             num_rewards = len(check["reward"])
 
+        location_names = []
+
         for idx in range(num_rewards):
             full_name = name
-            if "reward" in check and len(check["reward"]) > 1:
+            if num_rewards > 1:
                 full_name += f" - Reward {idx + 1}"
 
             self.ast_location_list.append(self.ctx.ast_generator.create_ast_call_location(
                 full_name,
                 self.current_code,
                 clearance,
-                kind,
                 check["region"],
                 check["condition"] if "condition" in check else []))
 
             check["mwid"].append(self.current_code)
 
             self.current_code += 1
+            location_names.append(full_name)
+
+        if num_rewards > 1:
+            self.ast_event_list.append(self.ctx.ast_generator.create_ast_call_location(
+                name,
+                None,
+                "Default",
+                check["region"],
+                [["quest", name] for name in location_names]
+            ))
 
         if "reward" not in check:
             return
@@ -142,41 +156,25 @@ class GameState:
         self.add_location(
             name,
             clearance,
-            "CHEST",
             chest)
-
-        # for mode, conditions in chest["condition"].items():
-        #     if conditions[0] not in self.ctx.rando_data["softLockAreas"][mode]:
-        #         self.add_item(chest["item"], chest["amount"], mode)
 
     def add_cutscene(self, name: str, cutscene: typing.Dict[str, typing.Any]):
         self.add_location(
             name,
             "Default",
-            "CUTSCENE",
             cutscene)
-
-        # for mode, conditions in cutscene["condition"].items():
-        #     if conditions[0] not in self.ctx.rando_data["softLockAreas"][mode]:
-        #         self.add_item(cutscene["item"], cutscene["amount"], mode)
 
     def add_element(self, name: str, element: typing.Dict[str, typing.Any]):
         self.add_location(
             name,
             "Default",
-            "ELEMENT",
             element)
 
     def add_quest(self, name: str, quest: typing.Dict[str, typing.Any]):
         self.add_location(
             name,
             "Default",
-            "QUEST",
             quest)
-
-        # for mode, conditions in quest["condition"].items():
-        #     if conditions[0] not in self.ctx.rando_data["softLockAreas"][mode]:
-        #         self.add_item(quest["item"], quest["amount"], mode)
 
     def calculate_game_state(self):
         constants: typing.Dict[str, typing.Any] = {

@@ -3,26 +3,17 @@
 import typing
 from BaseClasses import Location, Region
 
-# Types of Check
-CHECK_ELEMENT = 1
-CHECK_CHEST = 2
-CHECK_CUTSCENE = 3
-CHECK_SHOP = 4
-CHECK_QUEST = 5
-
 class Condition(typing.NamedTuple):
-    cutscenes: typing.List[str] = []
     items: typing.List[typing.Tuple[str, int]] = []
-    quests: typing.List[str] = []
+    locations: typing.List[str] = []
     regions: typing.List[str] = []
 
 class LocationData(typing.NamedTuple):
     name: str
-    code: int
+    code: int | None
     region: typing.Dict[str, str]
-    cond: Condition
+    cond: Condition = Condition()
     clearance: str = "Default"
-    kind: int = CHECK_CHEST
 
 class CrossCodeLocation(Location):
     game: str = "CrossCode"
@@ -41,8 +32,10 @@ class CrossCodeLocation(Location):
         self.event = False
         self.region = data.region[mode]
 
-# GENERATED CODE
-# DO NOT TOUCH
 locations_data = [
     {{locations_data | indent(4)}}
+]
+
+events_data = [
+    {{events_data | indent(4)}}
 ]

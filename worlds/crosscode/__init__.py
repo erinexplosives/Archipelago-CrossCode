@@ -1,11 +1,11 @@
 import typing
 from BaseClasses import ItemClassification, Location, LocationProgressType, Region, Item
 from worlds.AutoWorld import WebWorld, World
-from worlds.generic.Rules import set_rule
+from worlds.generic.Rules import add_rule, set_rule
 from .Common import *
 from .Items import CrossCodeItem, items_data, items_dict
 from .Locations import CrossCodeLocation, locations_data
-from .Logic import conditions_satisfied_location, conditions_satisfied_region
+from .Logic import condition_satisfied, has_clearance
 from .Options import Reachability, crosscode_options
 from .Regions import RegionsData, region_packs, modes
 
@@ -87,7 +87,7 @@ class CrossCodeWorld(World):
         for conn in self.region_pack.region_connections:
             self.region_dict[conn.region_from].add_exits(
                 {conn.region_to: f"{conn.region_from} <-> {conn.region_to}"},
-                {conn.region_to: conditions_satisfied_region(self.player, conn)},
+                {conn.region_to: condition_satisfied(self.player, conn.cond)},
             )
 
         menu_region = Region("Menu", self.player, self.multiworld)
@@ -97,7 +97,7 @@ class CrossCodeWorld(World):
         for name, region in self.region_dict.items():
             region.locations = []
             for data in locations_data:
-                if self.logic_mode in data.access and data.access[self.logic_mode].region == name:
+                if self.logic_mode in data.region and data.region[self.logic_mode] == name:
                     region.locations.append(CrossCodeLocation(self.player, data, self.logic_mode, self.region_dict))
 
             if name in self.region_pack.excluded_regions:
@@ -137,7 +137,9 @@ class CrossCodeWorld(World):
     def set_rules(self):
         for _, region in self.region_dict.items():
             for loc in region.locations:
-                set_rule(loc, conditions_satisfied_location(self.player, self.logic_mode, loc.data))
+                add_rule(loc, condition_satisfied(self.player, loc.data.cond))
+                if loc.data.clearance != "Default":
+                    add_rule(loc, has_clearance(self.player, loc.data.clearance))
 
     def fill_slot_data(self):
         return {
