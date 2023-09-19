@@ -6,7 +6,7 @@ from BaseClasses import Location, Region
 class Condition(typing.NamedTuple):
     items: typing.List[typing.Tuple[str, int]] = []
     locations: typing.List[str] = []
-    regions: typing.List[str] = []
+    regions: typing.Dict[str, typing.List[str]] = {}
 
 class LocationData(typing.NamedTuple):
     name: str

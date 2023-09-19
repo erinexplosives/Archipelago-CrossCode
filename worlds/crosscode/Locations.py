@@ -9,7 +9,7 @@ from BaseClasses import Location, Region
 class Condition(typing.NamedTuple):
     items: typing.List[typing.Tuple[str, int]] = []
     locations: typing.List[str] = []
-    regions: typing.List[str] = []
+    regions: typing.Dict[str, typing.List[str]] = {}
 
 class LocationData(typing.NamedTuple):
     name: str
@@ -421,7 +421,7 @@ locations_data = [
     LocationData(name='Round and Round - Reward 1', code=300382, region={'linear': '3', 'open': 'open3'}),
     LocationData(name='Round and Round - Reward 2', code=300383, region={'linear': '3', 'open': 'open3'}),
     LocationData(name='Round and Round - Reward 3', code=300384, region={'linear': '3', 'open': 'open3'}),
-    LocationData(name='Crocus Pocus', code=300385, region={'linear': '31', 'open': 'open3'}, cond=Condition(items=[('Disc of Flora', 1), ('Heat', 1)], locations=['Talatu Bergen 25%', "Talatu Ba'kii 50%", 'Talatu Basin 75%'], regions=['open4.1', 'open5', 'open9', 'open10', 'open16'])),
+    LocationData(name='Crocus Pocus', code=300385, region={'linear': '31', 'open': 'open3'}, cond=Condition(items=[('Disc of Flora', 1), ('Heat', 1)], locations=['Talatu Bergen 25%', "Talatu Ba'kii 50%", 'Talatu Basin 75%'], regions={'open': ['open4.1', 'open5', 'open9', 'open10', 'open16']})),
     LocationData(name='The Observatory', code=300386, region={'linear': '31', 'open': 'open18'}, cond=Condition(locations=['A Promise is a Promise 5'])),
     LocationData(name='Chase the Hologram Frobbit', code=300387, region={'linear': '20', 'open': 'open9'}),
     LocationData(name='Bergen Trailblazing', code=300388, region={'linear': '3', 'open': 'open3'}, cond=Condition(locations=['Bergen Trailblazing Collect', 'Bergen Trailblazing Defeat', 'Bergen Trailblazing Landmarks', 'Bergen Trailblazing Data Probe'])),

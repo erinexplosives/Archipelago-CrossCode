@@ -6,7 +6,7 @@ class AstGenerator:
     def create_ast_call_condition(self, conditions: typing.List[typing.List[str]]) -> ast.Call:
         items = []
         locations = []
-        regions = []
+        regions = {}
 
         for cond in conditions:
             if not isinstance(cond, list):
@@ -19,21 +19,20 @@ class AstGenerator:
                     items.append(cond[1:])
                 continue
 
-            target_list = None
-            if cond[0] in ["cutscene", "quest", "location"]:
-                target_list = locations
-            if cond[0] == "region":
-                target_list = regions
-
-            if (target_list == None):
+            elif cond[0] in ["cutscene", "quest", "location"]:
+                locations.append(cond[1])
+            elif cond[0] == "region":
+                mode, region = cond[1:]
+                if mode not in regions:
+                    regions[mode] = []
+                regions[mode].append(region)
+            else:
                 raise RuntimeError(f"Error parsing condition '{cond}': invalid condition type")
-            target_list.append(cond[1])
 
         result = ast.Call(
             func=ast.Name("Condition"),
             args=[],
-            keywords=[
-                ])
+            keywords=[])
 
         if len(items) >= 1:
             result.keywords.append(ast.keyword(
@@ -42,11 +41,15 @@ class AstGenerator:
         if len(locations) >= 1:
             result.keywords.append(ast.keyword(
                 "locations",
-                ast.List([ ast.Constant(s) for s in locations])))
+                ast.List([ast.Constant(s) for s in locations])))
         if len(regions) >= 1:
             result.keywords.append(ast.keyword(
                 "regions",
-                ast.List([ ast.Constant(s) for s in regions])))
+                ast.Dict(
+                    keys=[ast.Constant(s) for s in regions.keys()],
+                    values=[ast.Constant(s) for s in regions.values()]
+                )
+            ))
         return result
 
     def create_ast_call_location(

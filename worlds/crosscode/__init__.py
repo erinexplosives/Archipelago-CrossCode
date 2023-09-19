@@ -87,7 +87,7 @@ class CrossCodeWorld(World):
         for conn in self.region_pack.region_connections:
             self.region_dict[conn.region_from].add_exits(
                 {conn.region_to: f"{conn.region_from} <-> {conn.region_to}"},
-                {conn.region_to: condition_satisfied(self.player, conn.cond)},
+                {conn.region_to: condition_satisfied(self.player, self.logic_mode, conn.cond)},
             )
 
         menu_region = Region("Menu", self.player, self.multiworld)
@@ -138,12 +138,12 @@ class CrossCodeWorld(World):
                     continue
 
                 exclude.pop(idx)
-                self.multiworld.itempool.append(self.create_item("Chef Sandwich x2"))
+                self.multiworld.itempool.append(self.create_item("Sandwich"))
 
     def set_rules(self):
         for _, region in self.region_dict.items():
             for loc in region.locations:
-                add_rule(loc, condition_satisfied(self.player, loc.data.cond))
+                add_rule(loc, condition_satisfied(self.player, self.logic_mode, loc.data.cond))
                 if loc.data.clearance != "Default":
                     add_rule(loc, has_clearance(self.player, loc.data.clearance))
 

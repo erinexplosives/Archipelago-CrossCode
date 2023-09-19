@@ -10,13 +10,14 @@ clearance_items = {
     "Gold": "Radiant Key",
 }
 
-def condition_satisfied(player: int, condition: Condition) -> typing.Callable[[CollectionState], bool]:
+def condition_satisfied(player: int, mode: str, condition: Condition) -> typing.Callable[[CollectionState], bool]:
     def conditions_satisfied_internal(state: CollectionState) -> bool:
         if False in [state.count(item, player) >= amount for item, amount in condition.items]:
             return False
         if False in [state.can_reach(location, "Location", player) for location in condition.locations]:
             return False
-        if False in [state.can_reach(region, "Region", player) for region in condition.regions]:
+        if mode in condition.regions and \
+                False in [state.can_reach(region, "Region", player) for region in condition.regions[mode]]:
             return False
         return True
 
