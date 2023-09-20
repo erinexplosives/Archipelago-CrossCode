@@ -3,36 +3,8 @@
 # If you need to change something here, check out codegen.py and the templates directory.
 
 
-import typing
-from BaseClasses import Item, ItemClassification
-
-class ItemData(typing.NamedTuple):
-    name: str
-    item_id: int
-    amount: int
-    combo_id: int
-    classification: ItemClassification
-    quantity: typing.Dict[str, int]
-
-    def __hash__(self):
-        return hash((self.item_id, self.amount))
-
-    def __eq__(self, other):
-        return self.item_id == other.item_id and self.amount == other.amount
-
-class CrossCodeItem(Item):
-    game: str = "CrossCode"
-    data: ItemData
-
-    def __init__(self, player: int, data: ItemData):
-        super(CrossCodeItem, self).__init__(
-            data.name,
-            data.classification,
-            data.combo_id,
-            player,
-        )
-
-        self.data = data
+from BaseClasses import ItemClassification
+from .types.Items import ItemData
 
 items_data = [
     ItemData(name='Heat', item_id=0, amount=1, combo_id=300000, classification=ItemClassification.progression, quantity={'linear': 1, 'open': 1}),

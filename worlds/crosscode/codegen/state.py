@@ -5,41 +5,6 @@ from .ast import AstGenerator
 from .context import Context
 from .util import *
 
-class RegionMap:
-    ctx: Context
-
-    regions_seen: typing.Set[str]
-    connections: typing.List[ast.Call]
-    events: typing.List[ast.Call]
-    mode: str
-
-    def __init__(self, mode, ctx: Context):
-        self.ctx = ctx
-        self.mode = mode
-        self.regions_seen = set()
-        self.connections = []
-        self.events = []
-
-    def add_region_connection(self, conn: typing.Dict[str, typing.Any]):
-        self.regions_seen.add(conn["from"])
-        self.regions_seen.add(conn["to"])
-
-        self.connections.append(self.ctx.ast_generator.create_ast_call_region_connection(
-            conn["from"],
-            conn["to"],
-            conn["condition"] if "condition" in conn else []))
-
-        # TEMPORARY HACK
-        # Not extensible at all
-        # Remove ASAP
-        self.events.append(self.ctx.ast_generator.create_ast_call_location(
-            conn["to"] + " (Event)",
-            None,
-            "Default",
-            { self.mode: conn["from"] },
-            conn["condition"] if "condition" in conn else []))
-
-
 class GameState:
     ctx: Context
     current_code: int = BASE_ID
