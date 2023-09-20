@@ -86,6 +86,10 @@ class GameState:
 
         item_info = self.ctx.item_data[item_id]
 
+        extra_item_info = self.ctx.rando_data["items"][item_name]
+
+        cls = extra_item_info["classification"] if "classification" in extra_item_info else self.get_item_classification(item_info)
+
         combo_id = BASE_ID + RESERVED_ITEM_IDS + \
             self.ctx.num_items * (item_amount - 1) + item_id
 
@@ -95,7 +99,7 @@ class GameState:
                 item_id,
                 item_amount,
                 combo_id,
-                self.get_item_classification(item_info))
+                cls)
 
         self.ctx.ast_generator.add_quantity(self.found_items[combo_id], mode)
 
