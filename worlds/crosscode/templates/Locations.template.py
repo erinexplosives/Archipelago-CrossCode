@@ -32,6 +32,8 @@ class CrossCodeLocation(Location):
         self.event = False
         self.region = data.region[mode]
 
+needed_items = {{needed_items}}
+
 locations_data = [
     {{locations_data | indent(4)}}
 ]

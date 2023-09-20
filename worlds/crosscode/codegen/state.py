@@ -50,6 +50,10 @@ class GameState:
     # contains information all about a specific logic pack's regions
     region_maps: typing.Dict[str, RegionMap]
 
+    # The number of items needed
+    # Incremented when there's a location with no reward
+    needed_items: typing.Dict[str, int] = {}
+
     def __init__(self, ctx: Context):
         # duplicating some attributes
         self.ctx = ctx
@@ -95,6 +99,22 @@ class GameState:
 
         self.ctx.ast_generator.add_quantity(self.found_items[combo_id], mode)
 
+    def add_element_item(self, el: str, mode: str):
+        try:
+            idx = ["Heat", "Cold", "Shock", "Wave"].index(el)
+        except:
+            raise RuntimeError("Error adding element: {el} not an element")
+
+        item = self.ctx.ast_generator.create_ast_call_item(
+            el, 0, 1, BASE_ID + idx, "progression")
+        for mode in self.ctx.rando_data["modes"]:
+            quantity = item.keywords[-1].value
+            assert (isinstance(quantity, ast.Dict))
+            quantity.keys.append(ast.Constant(mode))
+            quantity.values.append(ast.Constant(1))
+
+        self.found_items[BASE_ID + idx] = item
+
     def add_reward(self, ary: typing.List, mode: str):
         kind, *info = ary
 
@@ -105,13 +125,22 @@ class GameState:
                 self.add_item(info[0], info[1], mode)
             else:
                 raise RuntimeError(f"Error parsing reward {ary}: expected one or two elements")
+        elif kind == "element":
+            if len(info) == 1:
+                self.add_element_item(info[0], mode)
+            else:
+                raise RuntimeError(f"Error parsing reward {ary}: expected one element")
+        else:
+            raise RuntimeError(f"Error parsing reward {ary}: unrecognized type")
 
     def add_location(self, name: str, clearance: str, check: typing.Dict[str, typing.Any]):
         check["mwid"] = []
 
         num_rewards = 1
         if "reward" in check:
-            num_rewards = len(check["reward"])
+            if len(check["reward"]) == 0:
+                raise RuntimeError(f"Error while location {name}: need one or more rewards (get rid of the entry if there are no rewards)")
+            num_rewards = max(num_rewards, len(check["reward"]))
 
         location_names = []
 
@@ -142,11 +171,22 @@ class GameState:
             ))
 
         if "reward" not in check:
+            for mode in check["region"]:
+                if check["region"][mode] in self.ctx.rando_data["excludedRegions"][mode]:
+                    print(f"skipping reward for {name}")
+                    continue
+                if mode not in self.needed_items:
+                    self.needed_items[mode] = 1
+                else:
+                    self.needed_items[mode] += 1
             return
+
         if not isinstance(check["reward"], list):
             raise RuntimeError(f"Error adding rewards for location {name}: reward is not a list")
 
         for mode in check["region"]:
+            if check["region"][mode] in self.ctx.rando_data["excludedRegions"][mode]:
+                continue
             for reward in check["reward"]:
                 self.add_reward(reward, mode)
 
@@ -164,7 +204,7 @@ class GameState:
             "Default",
             cutscene)
 
-    def add_element(self, name: str, element: typing.Dict[str, typing.Any]):
+    def add_element_location(self, name: str, element: typing.Dict[str, typing.Any]):
         self.add_location(
             name,
             "Default",
@@ -184,17 +224,6 @@ class GameState:
 
         self.ctx.rando_data["mwconstants"] = constants
 
-        for idx, el in enumerate(["Heat", "Cold", "Shock", "Wave"]):
-            item = self.ctx.ast_generator.create_ast_call_item(
-                el, 0, 1, BASE_ID + idx, "progression")
-            for mode in self.ctx.rando_data["modes"]:
-                quantity = item.keywords[-1].value
-                assert (isinstance(quantity, ast.Dict))
-                quantity.keys.append(ast.Constant(mode))
-                quantity.values.append(ast.Constant(1))
-
-            self.found_items[BASE_ID + idx] = item
-
         for name, chest in self.ctx.rando_data["chests"].items():
             self.add_chest(name, chest)
 
@@ -202,7 +231,7 @@ class GameState:
             self.add_cutscene(name, cutscene)
 
         for name, element in self.ctx.rando_data["elements"].items():
-            self.add_element(name, element)
+            self.add_element_location(name, element)
 
         for dev_name, quest in dict.items(self.ctx.rando_data["quests"]):
             self.add_quest(dev_name, quest)

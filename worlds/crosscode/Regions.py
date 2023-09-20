@@ -27,7 +27,7 @@ region_packs: typing.Dict[str, RegionsData] = {
     "linear": RegionsData(
         starting_region = "2",
         goal_region = "32",
-        excluded_regions = ['linear', 'open'],
+        excluded_regions = ['1'],
         region_list = [
             '2',
             '3',
@@ -103,7 +103,7 @@ region_packs: typing.Dict[str, RegionsData] = {
     "open": RegionsData(
         starting_region = "open2",
         goal_region = "open19",
-        excluded_regions = ['linear', 'open'],
+        excluded_regions = ['open1'],
         region_list = [
             'open2',
             'open3',

@@ -4,7 +4,7 @@ from worlds.AutoWorld import WebWorld, World
 from worlds.generic.Rules import add_rule, set_rule
 from .Common import *
 from .Items import CrossCodeItem, items_data, items_dict
-from .Locations import CrossCodeLocation, locations_data, events_data
+from .Locations import CrossCodeLocation, locations_data, events_data, needed_items
 from .Logic import condition_satisfied, has_clearance
 from .Options import Reachability, crosscode_options
 from .Regions import RegionsData, region_packs, modes
@@ -139,6 +139,9 @@ class CrossCodeWorld(World):
 
                 exclude.pop(idx)
                 self.multiworld.itempool.append(self.create_item("Sandwich"))
+
+        for _ in range(needed_items[self.logic_mode]):
+            self.multiworld.itempool.append(self.create_item("Sandwich"))
 
     def set_rules(self):
         for _, region in self.region_dict.items():

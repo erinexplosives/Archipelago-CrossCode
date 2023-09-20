@@ -45,7 +45,8 @@ class FileGenerator:
                               for item in self.state.ast_event_list]
         code_events_data = ",\n".join(code_event_list)
         locations_complete = template.render(
-            locations_data=code_locations_data, events_data=code_events_data, **self.common_args)
+            locations_data=code_locations_data, events_data=code_events_data, 
+            needed_items=self.state.needed_items, **self.common_args)
 
         with open("Locations.py", "w") as f:
             f.write(locations_complete)
@@ -83,7 +84,7 @@ class FileGenerator:
             code_region_connections = ",\n".join(code_region_connections)
 
             code_excluded_regions = ast.unparse(
-                ast.List([ast.Constant(x) for x in self.ctx.rando_data["excludedRegions"]]))
+                ast.List([ast.Constant(x) for x in self.ctx.rando_data["excludedRegions"][mode]]))
 
             code_region_pack_list.append({
                 "name": mode,

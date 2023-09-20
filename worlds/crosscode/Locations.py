@@ -35,6 +35,8 @@ class CrossCodeLocation(Location):
         self.event = False
         self.region = data.region[mode]
 
+needed_items = {'linear': 37, 'open': 37}
+
 locations_data = [
     LocationData(name='Vermillion Wasteland - Spiral Cliff - Bronze Chest', code=300000, region={'linear': '22', 'open': 'open18'}, cond=Condition(items=[('Heat', 1), ('Cold', 1)]), clearance='Bronze'),
     LocationData(name='Vermillion Wasteland - Spiral Cliff - Chest', code=300001, region={'linear': '22', 'open': 'open18'}, cond=Condition(items=[('Heat', 1), ('Cold', 1)])),
@@ -435,7 +437,7 @@ locations_data = [
     LocationData(name='Round and Round 2 - Reward 1', code=300396, region={'linear': '3', 'open': 'open3'}, cond=Condition(locations=['Round and Round'])),
     LocationData(name='Round and Round 2 - Reward 2', code=300397, region={'linear': '3', 'open': 'open3'}, cond=Condition(locations=['Round and Round'])),
     LocationData(name='Round and Round 2 - Reward 3', code=300398, region={'linear': '3', 'open': 'open3'}, cond=Condition(locations=['Round and Round'])),
-    LocationData(name='Digging Up the Past', code=300399, region={'linear': '10', 'open': 'open4_7'}, cond=Condition(items=[('Heat', 1)])),
+    LocationData(name='Digging Up the Past', code=300399, region={'linear': '10', 'open': 'open4.7'}, cond=Condition(items=[('Heat', 1)])),
     LocationData(name='Filthy Frobbits - Reward 1', code=300400, region={'linear': '3', 'open': 'open3'}),
     LocationData(name='Filthy Frobbits - Reward 2', code=300401, region={'linear': '3', 'open': 'open3'}),
     LocationData(name='Explosive Debugging - Reward 1', code=300402, region={'linear': '3', 'open': 'open3'}, cond=Condition(items=[('Blue Ice Shade', 1), ('Heat', 1)], locations=['Filthy Frobbits'])),
@@ -473,7 +475,7 @@ locations_data = [
     LocationData(name='Maroon Valley Defeat', code=300434, region={'linear': '11', 'open': 'open5'}, cond=Condition(locations=['Bergen Trailblazing'])),
     LocationData(name='Maroon Valley Landmarks', code=300435, region={'linear': '11', 'open': 'open5'}, cond=Condition(locations=['Bergen Trailblazing'])),
     LocationData(name='Maroon Valley Data Probe', code=300436, region={'linear': '11', 'open': 'open5'}, cond=Condition(locations=['Bergen Trailblazing'])),
-    LocationData(name='Maroon Tree Defender', code=300437, region={'linear': '12', 'open': 'open6'}, cond=Condition(items=[('Maroon Tree Pass', 1), ('Heat', 1)])),
+    LocationData(name='Maroon Tree Defender', code=300437, region={'linear': '12', 'open': 'open6'}, cond=Condition(items=[('Maroon Cave Pass', 1), ('Heat', 1)])),
     LocationData(name='Blasting Shells - Reward 1', code=300438, region={'linear': '11', 'open': 'open5'}),
     LocationData(name='Blasting Shells - Reward 2', code=300439, region={'linear': '11', 'open': 'open5'}),
     LocationData(name='Hot Trail', code=300440, region={'linear': '11', 'open': 'open5'}, cond=Condition(items=[('Red Flame Shade', 1), ('Heat', 1)], locations=['Blasting Shells'])),
@@ -506,7 +508,7 @@ locations_data = [
     LocationData(name='Rooting for Power - Reward 1', code=300467, region={'linear': '23', 'open': 'open10'}, cond=Condition(items=[('Purple Bolt Shade', 1), ('Azure Drop Shade', 1)], locations=['Lakeside Escort'])),
     LocationData(name='Rooting for Power - Reward 2', code=300468, region={'linear': '23', 'open': 'open10'}, cond=Condition(items=[('Purple Bolt Shade', 1), ('Azure Drop Shade', 1)], locations=['Lakeside Escort'])),
     LocationData(name='Rooting for Power - Reward 3', code=300469, region={'linear': '23', 'open': 'open10'}, cond=Condition(items=[('Purple Bolt Shade', 1), ('Azure Drop Shade', 1)], locations=['Lakeside Escort'])),
-    LocationData(name='Sprouting Business', code=300470, region={'linear': '23', 'open': 'open10'}, cond=Condition(items=[('wave', 1)])),
+    LocationData(name='Sprouting Business', code=300470, region={'linear': '23', 'open': 'open10'}, cond=Condition(items=[('Wave', 1)])),
     LocationData(name='Mushroom Kingdom', code=300471, region={'linear': '23', 'open': 'open10'}, cond=Condition(locations=['Sprouting Business'])),
     LocationData(name='Pumpkin Land Superfun', code=300472, region={'linear': '23', 'open': 'open10'}),
     LocationData(name='A Promise is a Promise 4', code=300473, region={'linear': '23', 'open': 'open10'}, cond=Condition(items=[('Broken Deck', 1)], locations=['A Promise is a Promise 3'])),
@@ -514,15 +516,15 @@ locations_data = [
     LocationData(name="Gaia's Garden Collect", code=300475, region={'linear': '23', 'open': 'open10'}, cond=Condition(locations=['Maroon Valley Trailblazing'])),
     LocationData(name="Gaia's Garden Defeat", code=300476, region={'linear': '23', 'open': 'open10'}, cond=Condition(locations=['Maroon Valley Trailblazing'])),
     LocationData(name="Gaia's Garden Landmarks", code=300477, region={'linear': '23', 'open': 'open10'}, cond=Condition(locations=['Maroon Valley Trailblazing'])),
-    LocationData(name="Gaia's Garden Data Probe", code=300478, region={'linear': '23', 'open': 'open10'}, cond=Condition(items=[('wave', 1)], locations=['Maroon Valley Trailblazing'])),
+    LocationData(name="Gaia's Garden Data Probe", code=300478, region={'linear': '23', 'open': 'open10'}, cond=Condition(items=[('Wave', 1)], locations=['Maroon Valley Trailblazing'])),
     LocationData(name='Turret Defense Challenge 1', code=300479, region={'linear': '23', 'open': 'open10'}, cond=Condition(locations=['Turret Defense'])),
     LocationData(name='Turret Defense Challenge 2', code=300480, region={'linear': '23', 'open': 'open10'}, cond=Condition(locations=['An Original Idea'])),
     LocationData(name='A Promise is a Promise 5', code=300481, region={'linear': '33', 'open': 'open20'}, cond=Condition(items=[('Broken Chakrams', 1)], locations=['A Promise is a Promise 4'])),
     LocationData(name='Railing Rider', code=300482, region={'linear': '2', 'open': 'open2'}),
     LocationData(name='All Hail the Ice Cream', code=300483, region={'linear': '3', 'open': 'open3'}),
     LocationData(name='Training with the Master', code=300484, region={'linear': '2', 'open': 'open2'}, cond=Condition(locations=['Training: VRP', 'Training: VPI'])),
-    LocationData(name='Training: VRP', code=300485, region={'linear': '2', 'open': 'open2'}, cond=Condition(items=[('Blue Ice Shade', 1), ('Red Flame Shade', 1), ('Heat', 1), ('cold', 1)])),
-    LocationData(name='Training: VPI', code=300486, region={'linear': '2', 'open': 'open2'}, cond=Condition(items=[('Blue Ice Shade', 1), ('Red Flame Shade', 1), ('Heat', 1), ('cold', 1)])),
+    LocationData(name='Training: VRP', code=300485, region={'linear': '2', 'open': 'open2'}, cond=Condition(items=[('Blue Ice Shade', 1), ('Red Flame Shade', 1), ('Heat', 1), ('Cold', 1)])),
+    LocationData(name='Training: VPI', code=300486, region={'linear': '2', 'open': 'open2'}, cond=Condition(items=[('Blue Ice Shade', 1), ('Red Flame Shade', 1), ('Heat', 1), ('Cold', 1)])),
     LocationData(name='Faction Introduction', code=300487, region={'linear': '2', 'open': 'open2'}, cond=Condition(items=[('Disc of Insight', 1)])),
     LocationData(name='Digging for Data', code=300488, region={'linear': '3', 'open': 'open3'}, cond=Condition(items=[('Disc of Insight', 1)])),
     LocationData(name="It Can Dig But It Can't Hide - Reward 1", code=300489, region={'linear': '3', 'open': 'open3'}, cond=Condition(locations=['Digging for Data'])),
