@@ -12,12 +12,13 @@ clearance_items = {
 
 def condition_satisfied(player: int, mode: str, condition: Condition) -> typing.Callable[[CollectionState], bool]:
     def conditions_satisfied_internal(state: CollectionState) -> bool:
-        if False in [state.count(item, player) >= amount for item, amount in condition.items]:
+        if not all([state.count(item, player) >= amount for item, amount in condition.items]):
             return False
-        if False in [state.can_reach(location, "Location", player) for location in condition.locations]:
+        if not all([state.has(f"{quest} (Event)", player) for quest in condition.quests]):
             return False
-        if mode in condition.regions and \
-                False in [state.can_reach(region, "Region", player) for region in condition.regions[mode]]:
+        if not all([state.has(f"{location} (Event)", player) for location in condition.locations]):
+            return False
+        if mode in condition.regions and not all([state.has(f"{region} (Event)", player) for region in condition.regions[mode]]):
             return False
         return True
 

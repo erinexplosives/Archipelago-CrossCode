@@ -5,6 +5,7 @@ import ast
 class AstGenerator:
     def create_ast_call_condition(self, conditions: typing.List[typing.List[str]]) -> ast.Call:
         items = []
+        quests = []
         locations = []
         regions = {}
 
@@ -18,8 +19,9 @@ class AstGenerator:
                 else:
                     items.append(cond[1:])
                 continue
-
-            elif cond[0] in ["cutscene", "quest", "location"]:
+            elif cond[0] == "quest":
+                quests.append(cond[1])
+            elif cond[0] in ["cutscene", "location"]:
                 locations.append(cond[1])
             elif cond[0] == "region":
                 mode, region = cond[1:]
@@ -38,6 +40,10 @@ class AstGenerator:
             result.keywords.append(ast.keyword(
                 "items",
                 ast.List([ ast.Tuple([ast.Constant(s), ast.Constant(i)]) for s, i in items])))
+        if len(quests) >= 1:
+            result.keywords.append(ast.keyword(
+                "quests",
+                ast.List([ast.Constant(s) for s in quests])))
         if len(locations) >= 1:
             result.keywords.append(ast.keyword(
                 "locations",

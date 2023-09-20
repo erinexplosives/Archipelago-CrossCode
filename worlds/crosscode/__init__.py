@@ -4,7 +4,7 @@ from worlds.AutoWorld import WebWorld, World
 from worlds.generic.Rules import add_rule, set_rule
 from .Common import *
 from .Items import CrossCodeItem, items_data, items_dict
-from .Locations import CrossCodeLocation, locations_data, events_data, needed_items
+from .Locations import Condition, CrossCodeLocation, locations_data, locations_dict, events_data, needed_items
 from .Logic import condition_satisfied, has_clearance
 from .Options import Reachability, crosscode_options
 from .Regions import RegionsData, region_packs, modes
@@ -44,6 +44,8 @@ class CrossCodeWorld(World):
     logic_mode: str
     region_pack: RegionsData
 
+    location_events: dict[str, Location]
+
     def register_reachability(self, option: Reachability, items: typing.Iterable[str]):
         if option == Reachability.option_local:
             local_items = self.multiworld.local_items[self.player].value
@@ -53,9 +55,20 @@ class CrossCodeWorld(World):
             non_local_items = self.multiworld.non_local_items[self.player].value
             for item in items:
                 non_local_items.add(item)
-        
+
+    def create_location(self, location: str, event_from_location=False) -> CrossCodeLocation:
+        return CrossCodeLocation(self.player, locations_dict[location], self.logic_mode, self.region_dict, event_from_location=event_from_location)
+
     def create_item(self, item: str) -> CrossCodeItem:
         return CrossCodeItem(self.player, items_dict[item])
+
+    def create_event_conditions(self, condition: Condition):
+        for name in condition.locations:
+            if name not in self.location_events:
+                location = self.create_location(name, event_from_location=True)
+                self.location_events[name] = location
+                self.region_dict[location.data.region[self.logic_mode]].locations.append(location)
+                location.place_locked_item(Item(location.name, ItemClassification.progression, None, self.player))
 
     def generate_early(self):
         start_inventory = self.multiworld.start_inventory[self.player].value
@@ -83,6 +96,7 @@ class CrossCodeWorld(World):
     def create_regions(self):
         self.region_dict = {name: Region(name, self.player, self.multiworld) for name in self.region_pack.region_list}
         self.multiworld.regions.extend([val for val in self.region_dict.values()])
+        self.location_events = {}
 
         for conn in self.region_pack.region_connections:
             self.region_dict[conn.region_from].add_exits(
@@ -90,15 +104,19 @@ class CrossCodeWorld(World):
                 {conn.region_to: condition_satisfied(self.player, self.logic_mode, conn.cond)},
             )
 
+        for conn in self.region_pack.region_connections:
+            self.create_event_conditions(conn.cond)
+
         menu_region = Region("Menu", self.player, self.multiworld)
         menu_region.add_exits({self.region_pack.starting_region: "login"})
         self.multiworld.regions.append(menu_region)
 
         for name, region in self.region_dict.items():
-            region.locations = []
             for data in locations_data:
                 if self.logic_mode in data.region and data.region[self.logic_mode] == name:
-                    region.locations.append(CrossCodeLocation(self.player, data, self.logic_mode, self.region_dict))
+                    location = CrossCodeLocation(self.player, data, self.logic_mode, self.region_dict)
+                    region.locations.append(location)
+                    self.create_event_conditions(location.data.cond)
 
             for data in events_data:
                 if self.logic_mode in data.region and data.region[self.logic_mode] == name:
@@ -109,6 +127,8 @@ class CrossCodeWorld(World):
             if name in self.region_pack.excluded_regions:
                 for location in region.locations:
                     location.progress_type = LocationProgressType.EXCLUDED
+        
+        print(self.location_events)
 
         victory = Region("Floor ??", self.player, self.multiworld)
         self.multiworld.regions.append(victory)

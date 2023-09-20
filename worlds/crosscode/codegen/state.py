@@ -10,6 +10,7 @@ class RegionMap:
 
     regions_seen: typing.Set[str]
     connections: typing.List[ast.Call]
+    events: typing.List[ast.Call]
     mode: str
 
     def __init__(self, mode, ctx: Context):
@@ -17,6 +18,7 @@ class RegionMap:
         self.mode = mode
         self.regions_seen = set()
         self.connections = []
+        self.events = []
 
     def add_region_connection(self, conn: typing.Dict[str, typing.Any]):
         self.regions_seen.add(conn["from"])
@@ -25,6 +27,16 @@ class RegionMap:
         self.connections.append(self.ctx.ast_generator.create_ast_call_region_connection(
             conn["from"],
             conn["to"],
+            conn["condition"] if "condition" in conn else []))
+
+        # TEMPORARY HACK
+        # Not extensible at all
+        # Remove ASAP
+        self.events.append(self.ctx.ast_generator.create_ast_call_location(
+            conn["to"] + " (Event)",
+            None,
+            "Default",
+            { self.mode: conn["from"] },
             conn["condition"] if "condition" in conn else []))
 
 
@@ -137,7 +149,7 @@ class GameState:
         else:
             raise RuntimeError(f"Error parsing reward {ary}: unrecognized type")
 
-    def add_location(self, name: str, clearance: str, check: typing.Dict[str, typing.Any]):
+    def add_location(self, name: str, clearance: str, check: typing.Dict[str, typing.Any], create_event=False):
         check["mwid"] = []
 
         num_rewards = 1
@@ -165,13 +177,13 @@ class GameState:
             self.current_code += 1
             location_names.append(full_name)
 
-        if num_rewards > 1:
+        if create_event or num_rewards > 1:
             self.ast_event_list.append(self.ctx.ast_generator.create_ast_call_location(
-                name,
+                name + " (Event)",
                 None,
                 "Default",
                 check["region"],
-                [["quest", name] for name in location_names]
+                check["condition"] if "condition" in check else []
             ))
 
         if "reward" not in check:
@@ -218,7 +230,8 @@ class GameState:
         self.add_location(
             name,
             "Default",
-            quest)
+            quest,
+            True)
 
     def calculate_game_state(self):
         constants: typing.Dict[str, typing.Any] = {
@@ -246,3 +259,4 @@ class GameState:
                 region_map.add_region_connection(connection)
 
             self.region_maps[mode] = region_map
+            self.ast_event_list.extend(region_map.events)
