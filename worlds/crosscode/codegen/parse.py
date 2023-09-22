@@ -7,7 +7,7 @@ from .context import Context
 from .util import BASE_ID, RESERVED_ITEM_IDS, get_item_classification
 
 from ..types.Items import ItemData
-from ..types.Locations import Condition, LocationData
+from ..types.Locations import Condition, LocationData, empty_condition
 from ..types.Regions import RegionConnection, RegionsData
 
 class JsonParserError(Exception):
@@ -27,8 +27,8 @@ class JsonParser:
     def __init__(self, ctx: Context):
         self.ctx = ctx
 
-    def parse_condition(self, raw: list[typing.Any]) -> Condition:
-        result: Condition = Condition()
+    def parse_condition(self, raw: list[typing.Any]) -> typing.Optional[Condition]:
+        result: Condition = empty_condition()
 
         for cond in raw:
             if not isinstance(cond, list):
@@ -85,12 +85,10 @@ class JsonParser:
             else:
                 raise JsonParserError(raw, cond, "condition", f"unknown type {cond[0]}")
 
-        return result
+        # Return None if there are no conditions
+        return result if not result.is_empty() else None
 
     def parse_location(self, name, raw: dict[str, typing.Any], code: typing.Optional[int]) -> LocationData:
-        if not isinstance(raw["name"], str):
-            raise JsonParserError(raw, name, "location", "expected name to be string")
-
         region = {}
         if "region" in raw:
             region = raw["region"]
@@ -108,7 +106,7 @@ class JsonParser:
             if not isinstance(clearance, str):
                 raise JsonParserError(raw, clearance, "location", "clearance must be a string")
 
-        condition = Condition()
+        condition = None
         if "condition" in raw:
             condition = self.parse_condition(raw["condition"])
 
@@ -129,12 +127,10 @@ class JsonParser:
 
         if name not in self.ctx.rando_data["items"]:
             raise JsonParserError(raw, name, "item reward", "item does not exist in randomizer data")
-        item_overrides = self.ctx.rando_data[name]
+        item_overrides = self.ctx.rando_data["items"][name]
         item_id = item_overrides["id"]
 
-        if item_overrides["id"] not in self.ctx.database:
-            raise JsonParserError(raw, name, "item reward", "item does not exist in database")
-        db_entry = self.ctx.database[self.ctx.rando_data[name]]
+        db_entry = self.ctx.item_data[item_id]
 
         combo_id = BASE_ID + RESERVED_ITEM_IDS + \
             self.ctx.num_items * (amount - 1) + item_id
@@ -145,7 +141,7 @@ class JsonParser:
             cls_str = item_overrides["classification"]
             if not hasattr(ItemClassification, cls_str):
                 raise JsonParserError(item_overrides, cls_str, "item reward", "invalid classification")
-            cls = getattr(item_overrides, cls_str)
+            cls = getattr(ItemClassification, cls_str)
 
         return ItemData(
             name=name,
@@ -205,9 +201,9 @@ class JsonParser:
         if not isinstance(region_to, str):
             raise JsonParserError(raw, region_to, "connection", "region must be str")
 
-        condition = Condition()
+        condition = None
         if "condition" in raw:
-            condition = Condition(raw["condition"])
+            condition = self.parse_condition(raw["condition"])
 
         return RegionConnection(region_from, region_to, condition)
 

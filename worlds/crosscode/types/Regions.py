@@ -5,7 +5,7 @@ from .Locations import Condition
 class RegionConnection(typing.NamedTuple):
     region_from: str
     region_to: str
-    cond: Condition
+    cond: typing.Optional[Condition]
 
 class RegionsData(typing.NamedTuple):
     starting_region: str

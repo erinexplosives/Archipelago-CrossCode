@@ -3,8 +3,10 @@ from BaseClasses import ItemClassification, Location, LocationProgressType, Regi
 from worlds.AutoWorld import WebWorld, World
 from worlds.generic.Rules import add_rule, set_rule
 from .Common import *
-from .Items import CrossCodeItem, items_data, items_dict
-from .Locations import Condition, CrossCodeLocation, locations_data, locations_dict, events_data, needed_items
+from .types.Items import CrossCodeItem
+from .types.Locations import CrossCodeLocation
+from .Items import items_data, items_dict
+from .Locations import Condition, locations_data, locations_dict, events_data, needed_items
 from .Logic import condition_satisfied, has_clearance
 from .Options import Reachability, crosscode_options
 from .Regions import RegionsData, region_packs, modes

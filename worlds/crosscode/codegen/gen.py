@@ -6,9 +6,9 @@ import json
 
 import jinja2
 
-
+from .ast import AstGenerator
 from .context import Context, make_context_from_directory
-from .state import GameState
+from .emit import emit_list
 from .util import GENERATED_COMMENT
 from .world_builder import WorldBuilder
 
@@ -18,14 +18,25 @@ class FileGenerator:
     ctx: Context
     common_args: typing.Dict[str, typing.Any]
     builder: WorldBuilder
+    world_dir: str
     data_out_dir: str
 
-    def __init__(self, data_dir: str, data_out_dir: str):
+    ast_generator: AstGenerator
+
+    def __init__(self, world_dir: str):
+        data_dir = os.path.join(world_dir, "data")
+        data_out_dir = os.path.join(world_dir, "data", "out")
+        template_dir = os.path.join(world_dir, "templates")
+
         self.ctx = make_context_from_directory(data_dir)
         self.environment = jinja2.Environment(
-            loader=jinja2.FileSystemLoader("templates"))
+            loader=jinja2.FileSystemLoader(template_dir))
         self.world_builder = WorldBuilder(self.ctx)
+
+        self.world_dir = world_dir
         self.data_out_dir = data_out_dir
+
+        self.ast_generator = AstGenerator()
 
         self.common_args = {
             "generated_comment": GENERATED_COMMENT,
@@ -39,73 +50,70 @@ class FileGenerator:
         # LOCATIONS
         template = self.environment.get_template("Locations.template.py")
 
-        code_location_list = [ast.unparse(item)
-                              for item in self.state.ast_location_list]
-        code_locations_data = ",\n".join(code_location_list)
+        code_locations_data = emit_list([self.ast_generator.create_ast_call_location(loc) for loc in world.locations_data])
 
-        code_event_list = [ast.unparse(item)
-                              for item in self.state.ast_event_list]
-        code_events_data = ",\n".join(code_event_list)
+        code_events_data =  emit_list([self.ast_generator.create_ast_call_location(loc) for loc in world.events_data])
+
         locations_complete = template.render(
             locations_data=code_locations_data, events_data=code_events_data, 
-            needed_items=self.state.needed_items, **self.common_args)
+            needed_items=world.num_needed_items, **self.common_args)
 
-        with open("Locations.py", "w") as f:
+        with open(os.path.join(self.world_dir, "Locations.py"), "w") as f:
             f.write(locations_complete)
 
         # ITEMS
-        template = self.environment.get_template("Items.template.py")
+        # template = self.environment.get_template("Items.template.py")
 
-        found_item_keys = list(dict.keys(self.state.found_items))
-        found_item_keys.sort()
+        # found_item_keys = list(dict.keys(self.state.found_items))
+        # found_item_keys.sort()
 
-        code_item_list = [ast.unparse(self.state.found_items[k])
-                          for k in found_item_keys]
-        code = ",\n".join(code_item_list)
-        items_complete = template.render(items_data=code, **self.common_args)
+        # code_item_list = [ast.unparse(self.state.found_items[k])
+        #                   for k in found_item_keys]
+        # code = ",\n".join(code_item_list)
+        # items_complete = template.render(items_data=code, **self.common_args)
 
-        with open("Items.py", "w") as f:
-            f.write(items_complete)
+        # with open("Items.py", "w") as f:
+        #     f.write(items_complete)
 
-        # REGIONS
-        template = self.environment.get_template("Regions.template.py")
+        # # REGIONS
+        # template = self.environment.get_template("Regions.template.py")
 
-        code_region_pack_list = []
+        # code_region_pack_list = []
 
-        for mode, region_map in self.state.region_maps.items():
-            regions_seen_keys = list(region_map.regions_seen)
-            regions_seen_keys.sort(key=lambda x: float(
-                x.strip(string.ascii_letters)))
+        # for mode, region_map in self.state.region_maps.items():
+        #     regions_seen_keys = list(region_map.regions_seen)
+        #     regions_seen_keys.sort(key=lambda x: float(
+        #         x.strip(string.ascii_letters)))
 
-            code_region_list = [
-                f'{ast.unparse(ast.Constant(k))}' for k in regions_seen_keys]
-            code_region_list = ",\n".join(code_region_list)
+        #     code_region_list = [
+        #         f'{ast.unparse(ast.Constant(k))}' for k in regions_seen_keys]
+        #     code_region_list = ",\n".join(code_region_list)
 
-            code_region_connections = [ast.unparse(
-                item) for item in region_map.connections]
-            code_region_connections = ",\n".join(code_region_connections)
+        #     code_region_connections = [ast.unparse(
+        #         item) for item in region_map.connections]
+        #     code_region_connections = ",\n".join(code_region_connections)
 
-            code_excluded_regions = ast.unparse(
-                ast.List([ast.Constant(x) for x in self.ctx.rando_data["excludedRegions"][mode]]))
+        #     code_excluded_regions = ast.unparse(
+        #         ast.List([ast.Constant(x) for x in self.ctx.rando_data["excludedRegions"][mode]]))
 
-            code_region_pack_list.append({
-                "name": mode,
-                "region_list": code_region_list,
-                "region_connections": code_region_connections,
-                "starting_region": self.ctx.rando_data["startingRegion"][mode],
-                "goal_region": self.ctx.rando_data["goalRegion"][mode],
-                "excluded_regions": code_excluded_regions
-            })
+        #     code_region_pack_list.append({
+        #         "name": mode,
+        #         "region_list": code_region_list,
+        #         "region_connections": code_region_connections,
+        #         "starting_region": self.ctx.rando_data["startingRegion"][mode],
+        #         "goal_region": self.ctx.rando_data["goalRegion"][mode],
+        #         "excluded_regions": code_excluded_regions
+        #     })
 
-        regions_complete = template.render(
-            region_packs=code_region_pack_list,
-            modes_string=", ".join(
-                [f'"{m}"' for m in self.ctx.rando_data["modes"]]),
-            **self.common_args
-        )
+        # regions_complete = template.render(
+        #     region_packs=code_region_pack_list,
+        #     modes_string=", ".join(
+        #         [f'"{m}"' for m in self.ctx.rando_data["modes"]]),
+        #     **self.common_args
+        # )
 
-        with open("Regions.py", "w") as f:
-            f.write(regions_complete)
+        # with open("Regions.py", "w") as f:
+        #     f.write(regions_complete)
 
         template = self.environment.get_template("Options.template.py")
 
@@ -115,7 +123,7 @@ class FileGenerator:
             **self.common_args
         )
 
-        with open("Options.py", "w") as f:
+        with open(os.path.join(self.world_dir, "Options.py"), "w") as f:
             f.write(options_complete)
 
         try:
@@ -123,5 +131,5 @@ class FileGenerator:
         except FileExistsError:
             pass
 
-        with open(f"{self.data_out_dir}/data.json", "w") as f:
+        with open(os.path.join(self.data_out_dir, "data.json"), "w") as f:
             json.dump(self.ctx.rando_data, f, indent='\t')

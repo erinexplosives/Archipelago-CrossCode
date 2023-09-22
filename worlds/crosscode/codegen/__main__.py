@@ -14,6 +14,6 @@
 
 from .gen import FileGenerator
 
-fg = FileGenerator("data", "data/out")
+fg = FileGenerator("worlds/crosscode")
 
 fg.generate_files()

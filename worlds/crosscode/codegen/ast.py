@@ -9,7 +9,9 @@ from ..types.Items import ItemData
 
 
 class AstGenerator:
-    def create_ast_call_condition(self, cond: Condition) -> ast.Call:
+    def create_ast_call_condition(self, cond: typing.Optional[Condition]) -> ast.expr:
+        if cond is None:
+            return ast.Constant(cond)
         result = ast.Call(
             func=ast.Name("Condition"),
             args=[],
@@ -67,7 +69,7 @@ class AstGenerator:
             ]
         )
 
-        if len(data.cond) > 0:
+        if data.cond is not None and len(data.cond) > 0:
             ast_item.keywords.append(ast.keyword(
                 arg="cond",
                 value=self.create_ast_call_condition(data.cond)
@@ -142,23 +144,3 @@ class AstGenerator:
         ast.fix_missing_locations(ast_region)
 
         return ast_region
-
-    def add_quantity(
-            self,
-            item: ast.Call,
-            mode: str):
-        quantity_keyword = item.keywords[-1]
-        quantity = quantity_keyword.value
-
-        assert (isinstance(quantity, ast.Dict))
-        try:
-            idx = list(map(lambda x: x.value, quantity.keys)).index(mode)
-        except ValueError:
-            quantity.keys.append(ast.Constant(mode))
-            quantity.values.append(ast.Constant(1))
-        else:
-            number = quantity.values[idx]
-            assert (isinstance(number, ast.Constant))
-            number.value += 1
-
-        ast.fix_missing_locations(quantity)

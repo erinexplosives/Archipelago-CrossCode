@@ -1,7 +1,5 @@
 import typing
 
-from .parse import JsonParser
-from .ast import AstGenerator
 from .util import get_json_object, load_json_with_includes
 
 
@@ -11,16 +9,11 @@ class Context:
     database: typing.Dict[str, typing.Any]
     num_items: int
 
-    ast_generator: AstGenerator
-    json_parser: JsonParser
-
     def __init__(self, rando_data, item_data, database):
         self.rando_data = rando_data
         self.item_data = item_data
         self.database = database
         self.num_items = len(self.item_data)
-
-        self.ast_generator = AstGenerator()
 
 
 def make_context_from_directory(data_dir) -> Context:
