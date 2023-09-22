@@ -83,20 +83,6 @@ class AstGenerator:
         return ast_item
 
     def create_ast_call_item(self, data: ItemData):
-        classification_as_str = ""
-        if data.classification == 0b0000:
-            classification_as_str = "filler"
-        if data.classification == 0b0001:
-            classification_as_str = "progression"
-        if data.classification == 0b0010:
-            classification_as_str = "useful"
-        if data.classification == 0b0100:
-            classification_as_str = "trap"
-        if data.classification == 0b1000:
-            classification_as_str = "skip_balancing"
-        if data.classification == 0b1001:
-            classification_as_str = "progression_skip_balancing"
-
         ast_item = ast.Call(
             func=ast.Name("ItemData"),
             args=[],
@@ -121,7 +107,7 @@ class AstGenerator:
                     arg="classification",
                     value=ast.Attribute(
                         value=ast.Name("ItemClassification"),
-                        attr=classification_as_str
+                        attr=data.classification.name
                     )
                 ),
                 ast.keyword(

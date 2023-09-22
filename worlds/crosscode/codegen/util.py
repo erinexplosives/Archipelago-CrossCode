@@ -2,6 +2,8 @@ import json
 import os
 import typing
 
+from BaseClasses import ItemClassification
+
 BASE_ID = 300000
 
 # I reserve some item IDs at the beginning of our slot for elements
@@ -41,3 +43,20 @@ def load_json_with_includes(filename: str) -> typing.Dict[str, typing.Any]:
             master[key] = value
 
     return master
+
+
+def get_item_classification(item: dict) -> ItemClassification:
+    """Deduce the classification of an item based on its item-database entry"""
+    if item["type"] == "CONS" or item["type"] == "TRADE":
+        return ItemClassification.filler
+    elif item["type"] == "KEY":
+        return ItemClassification.progression
+    elif item["type"] == "EQUIP":
+        return ItemClassification.useful
+    elif item["type"] == "TOGGLE":
+        if "Booster" in item["name"]["en_US"]:
+            return ItemClassification.progression
+        else:
+            return ItemClassification.filler
+    else:
+        raise RuntimeError(f"I don't know how to classify this item: {item['name']}")

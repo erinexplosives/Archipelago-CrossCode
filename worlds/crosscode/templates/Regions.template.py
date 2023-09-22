@@ -1,7 +1,6 @@
 {{generated_comment | indent("# ", True)}}
 
 import typing
-from BaseClasses import Region, Entrance
 
 from .Locations import Condition
 

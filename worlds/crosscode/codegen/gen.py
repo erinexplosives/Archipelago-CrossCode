@@ -6,23 +6,25 @@ import json
 
 import jinja2
 
+
 from .context import Context, make_context_from_directory
 from .state import GameState
 from .util import GENERATED_COMMENT
+from .world_builder import WorldBuilder
 
 
 class FileGenerator:
     environment: jinja2.Environment
     ctx: Context
     common_args: typing.Dict[str, typing.Any]
-    state: GameState
+    builder: WorldBuilder
     data_out_dir: str
 
     def __init__(self, data_dir: str, data_out_dir: str):
         self.ctx = make_context_from_directory(data_dir)
         self.environment = jinja2.Environment(
             loader=jinja2.FileSystemLoader("templates"))
-        self.state = GameState(self.ctx)
+        self.world_builder = WorldBuilder(self.ctx)
         self.data_out_dir = data_out_dir
 
         self.common_args = {
@@ -32,7 +34,7 @@ class FileGenerator:
         }
 
     def generate_files(self) -> None:
-        self.state.calculate_game_state()
+        world = self.world_builder.build()
 
         # LOCATIONS
         template = self.environment.get_template("Locations.template.py")

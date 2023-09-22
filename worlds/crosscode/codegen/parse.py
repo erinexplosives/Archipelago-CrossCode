@@ -1,7 +1,12 @@
 import string
 import typing
 
+from BaseClasses import ItemClassification
+
 from .context import Context
+from .util import BASE_ID, RESERVED_ITEM_IDS, get_item_classification
+
+from ..types.Items import ItemData
 from ..types.Locations import Condition, LocationData
 from ..types.Regions import RegionConnection, RegionsData
 
@@ -82,11 +87,7 @@ class JsonParser:
 
         return result
 
-    def parse_location(self, raw: dict[str, typing.Any], code: typing.Optional[int]) -> LocationData:
-        if "name" not in raw:
-            raise JsonParserError(raw, None, "location", "no name given")
-        name = raw["name"]
-
+    def parse_location(self, name, raw: dict[str, typing.Any], code: typing.Optional[int]) -> LocationData:
         if not isinstance(raw["name"], str):
             raise JsonParserError(raw, name, "location", "expected name to be string")
 
@@ -112,6 +113,82 @@ class JsonParser:
             condition = self.parse_condition(raw["condition"])
 
         return LocationData(name, code, region, condition, clearance)
+
+    def parse_item(self, raw: list[typing.Any]) -> ItemData:
+        name = ""
+        amount = 0
+
+        if len(raw) == 1:
+            name = raw[0]
+            amount = 1
+        elif len(raw) == 2:
+            name = raw[0]
+            amount = raw[1]
+        else:
+            raise JsonParserError(raw, raw, "item reward", "expected one or two elements")
+
+        if name not in self.ctx.rando_data["items"]:
+            raise JsonParserError(raw, name, "item reward", "item does not exist in randomizer data")
+        item_overrides = self.ctx.rando_data[name]
+        item_id = item_overrides["id"]
+
+        if item_overrides["id"] not in self.ctx.database:
+            raise JsonParserError(raw, name, "item reward", "item does not exist in database")
+        db_entry = self.ctx.database[self.ctx.rando_data[name]]
+
+        combo_id = BASE_ID + RESERVED_ITEM_IDS + \
+            self.ctx.num_items * (amount - 1) + item_id
+
+        cls = get_item_classification(db_entry)
+
+        if "classification" in item_overrides:
+            cls_str = item_overrides["classification"]
+            if not hasattr(ItemClassification, cls_str):
+                raise JsonParserError(item_overrides, cls_str, "item reward", "invalid classification")
+            cls = getattr(item_overrides, cls_str)
+
+        return ItemData(
+            name=name,
+            item_id=item_overrides["id"],
+            amount=amount,
+            combo_id=combo_id,
+            classification=cls,
+            quantity={}
+        )
+
+    def parse_element_item(self, raw: list[typing.Any]) -> ItemData:
+        el = ""
+        combo_id = BASE_ID
+
+        if len(raw) == 1:
+            el = raw[0]
+        else:
+            raise JsonParserError(raw, raw, "element reward", "expected one string")
+
+        try:
+            idx = ["Heat", "Cold", "Shock", "Wave"].index(el)
+            combo_id += idx
+        except:
+            raise RuntimeError("Error adding element: {el} not an element")
+
+        return ItemData(
+            name=el,
+            item_id=0,
+            amount=1,
+            combo_id=combo_id,
+            classification=ItemClassification.progression,
+            quantity={}
+        )
+
+    def parse_reward(self, raw: list[typing.Any]) -> ItemData:
+        kind, *info = raw
+
+        if kind == "item":
+            return self.parse_item(info)
+        elif kind == "element":
+            return self.parse_element_item(info)
+        else:
+            raise RuntimeError(f"Error parsing reward {raw}: unrecognized type")
 
     def parse_region_connection(self, raw: dict[str, typing.Any]) -> RegionConnection:
         if "from" not in raw:
@@ -178,3 +255,6 @@ class JsonParser:
         region_list.sort(key=lambda x: float(x.strip(string.ascii_letters)))
 
         return RegionsData(start, goal, exclude, region_list, connections)
+
+    def parse_regions_data_list(self, raw: dict[str, dict[str, typing.Any]]) -> dict[str, RegionsData]:
+        return {name: self.parse_regions_data(data) for name, data in raw.items()}

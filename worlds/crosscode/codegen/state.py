@@ -1,7 +1,6 @@
 import typing
 import ast
 
-from .ast import AstGenerator
 from .context import Context
 from .util import *
 
@@ -39,23 +38,6 @@ class GameState:
         self.ast_event_list = []
         self.found_items = {}
         self.region_maps = {}
-
-    def get_item_classification(self, item: dict) -> str:
-        """Deduce the classification of an item based on its item-database entry"""
-        if item["type"] == "CONS" or item["type"] == "TRADE":
-            return "filler"
-        elif item["type"] == "KEY":
-            return "progression"
-        elif item["type"] == "EQUIP":
-            return "useful"
-        elif item["type"] == "TOGGLE":
-            if "Booster" in item["name"]["en_US"]:
-                return "progression"
-            else:
-                return "filler"
-        else:
-            raise RuntimeError(
-                f"I don't know how to classify this item: {item['name']}")
 
     def add_item(self, item_name: str, item_amount: int, mode: str):
         item_full_name = item_name if item_amount == 1 else f"{item_name} x{item_amount}"

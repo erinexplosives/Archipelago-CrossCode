@@ -1,6 +1,7 @@
 import typing
-from .ast import AstGenerator
 
+from .parse import JsonParser
+from .ast import AstGenerator
 from .util import get_json_object, load_json_with_includes
 
 
@@ -11,6 +12,7 @@ class Context:
     num_items: int
 
     ast_generator: AstGenerator
+    json_parser: JsonParser
 
     def __init__(self, rando_data, item_data, database):
         self.rando_data = rando_data

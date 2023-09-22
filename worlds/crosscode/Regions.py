@@ -4,21 +4,9 @@
 
 
 import typing
-from BaseClasses import Region, Entrance
 
 from .Locations import Condition
-
-class RegionConnection(typing.NamedTuple):
-    region_from: str
-    region_to: str
-    cond: Condition
-
-class RegionsData(typing.NamedTuple):
-    starting_region: str
-    goal_region: str
-    excluded_regions: typing.List[str]
-    region_list: typing.List[str]
-    region_connections: typing.List[RegionConnection]
+from .types.Regions import RegionConnection, RegionsData
 
 modes = [ "linear", "open" ]
 default_mode = "open"
