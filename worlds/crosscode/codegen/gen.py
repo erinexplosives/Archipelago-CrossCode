@@ -115,7 +115,7 @@ class FileGenerator:
         # with open("Regions.py", "w") as f:
         #     f.write(regions_complete)
 
-        template = self.environment.get_template("Options.template.py")
+        template = self.environment.get_template("OptionsGenerated.template.py")
 
         options_complete = template.render(
             mode_index=self.ctx.rando_data["modes"].index(
@@ -123,7 +123,7 @@ class FileGenerator:
             **self.common_args
         )
 
-        with open(os.path.join(self.world_dir, "Options.py"), "w") as f:
+        with open(os.path.join(self.world_dir, "OptionsGenerated.py"), "w") as f:
             f.write(options_complete)
 
         try:
