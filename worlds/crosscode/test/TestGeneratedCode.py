@@ -6,6 +6,8 @@ from ..Locations import locations_data, events_data, needed_items
 from ..Regions import modes, region_packs
 
 class TestLocationAttributes(CrossCodeTestBase):
+    auto_construct = False
+
     def test_regions_exist(self):
         for mode in modes:
             all_regions = set()
