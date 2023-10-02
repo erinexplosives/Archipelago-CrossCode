@@ -1,5 +1,7 @@
 import typing
 
+T = typing.TypeVar("T", dict[str, typing.Any], list)
+
 def __replace(_, addon) -> typing.Any:
     return addon
 
@@ -50,7 +52,7 @@ __funcs: dict[str, typing.Callable[[typing.Any, dict[str, typing.Any]], typing.A
     "FIND": __find,
 }
 
-def diff_one(original, addon, name):
+def diff_one(original: T, addon, name) -> T:
     try:
         func = __funcs[name]
     except KeyError:
@@ -58,7 +60,7 @@ def diff_one(original, addon, name):
 
     return func(original, addon)
 
-def diff(original, addonList):
+def diff(original: T, addonList) -> T:
     if isinstance(addonList, list):
         for addon in addonList:
             name = addon["action"]
@@ -68,14 +70,16 @@ def diff(original, addonList):
         name = addonList["action"]
         return diff_one(original, addonList, name)
 
-def merge(original, addon):
+    raise RuntimeError(f"Cannot apply diff of type {type(addonList)}")
+
+def merge(original: T, addon: T, apply_diffs=True) -> T:
     if isinstance(original, dict):
         if not isinstance(addon, dict):
             raise RuntimeError(f"Cannot merge type {type(original)} with {type(addon)}")
 
         for key, value in addon.items():
             splitkey = key.split('::')
-            if len(splitkey) == 1:
+            if len(splitkey) == 1 or not apply_diffs:
                 if key not in original:
                     original[key] = value
                 else:

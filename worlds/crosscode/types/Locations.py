@@ -1,26 +1,16 @@
 import typing
+from dataclasses import dataclass, field
+
 from BaseClasses import Location, Region
 
-class Condition(typing.NamedTuple):
-    items: list[typing.Tuple[str, int]] = []
-    quests: list[str] = []
-    locations: list[str] = []
-    regions: dict[str, typing.List[str]] = {}
+from .Condition import Condition
 
-    def is_empty(self) -> bool:
-        return len(self.items) == 0 \
-                and len(self.quests) == 0 \
-                and len(self.locations) == 0 \
-                and len(self.regions) == 0
-
-def empty_condition():
-    return Condition([], [], [], {})
-
-class LocationData(typing.NamedTuple):
+@dataclass
+class LocationData:
     name: str
     code: typing.Optional[int]
     region: typing.Dict[str, str]
-    cond: typing.Optional[Condition] = None
+    cond: typing.Optional[list[Condition]] = None
     clearance: str = "Default"
 
 class CrossCodeLocation(Location):

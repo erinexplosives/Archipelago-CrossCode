@@ -14,7 +14,7 @@ class WorldBuilder:
     ctx: Context
     ast_generator: AstGenerator
     json_parser: JsonParser
-    current_code: int = BASE_ID
+    current_location_code: int = BASE_ID
 
     region_packs: dict[str, RegionsData]
 
@@ -54,8 +54,8 @@ class WorldBuilder:
 
             location_names.append(full_name)
 
-            loc = self.json_parser.parse_location(full_name, raw_loc, self.current_code)
-            self.current_code += 1
+            loc = self.json_parser.parse_location(full_name, raw_loc, self.current_location_code)
+            self.current_location_code += 1
 
             self.locations_data.append(loc)
 

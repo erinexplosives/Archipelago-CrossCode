@@ -7,8 +7,9 @@ from .context import Context
 from .util import BASE_ID, RESERVED_ITEM_IDS, get_item_classification
 
 from ..types.Items import ItemData
-from ..types.Locations import Condition, LocationData, empty_condition
+from ..types.Locations import Condition, LocationData
 from ..types.Regions import RegionConnection, RegionsData
+from ..types.Condition import ItemCondition, LocationCondition, QuestCondition, RegionCondition
 
 class JsonParserError(Exception):
     subject: typing.Any
@@ -27,19 +28,19 @@ class JsonParser:
     def __init__(self, ctx: Context):
         self.ctx = ctx
 
-    def parse_condition(self, raw: list[typing.Any]) -> typing.Optional[Condition]:
-        result: Condition = empty_condition()
+    def parse_condition(self, raw: list[typing.Any]) -> list[Condition]:
+        result: list[Condition] = []
 
         for cond in raw:
             if not isinstance(cond, list):
                 raise JsonParserError(raw, cond, "condition", "condition not a list")
-            
+
             num_args = len(cond) - 1
             if cond[0] == "item":
                 if num_args == 1:
-                    result.items.append((cond[1], 1))
+                    result.append(ItemCondition(cond[1]))
                 elif num_args == 2:
-                    result.items.append((cond[1], cond[2]))
+                    result.append(ItemCondition(cond[1], cond[2]))
                 else:
                     raise JsonParserError(
                         raw,
@@ -50,7 +51,7 @@ class JsonParser:
 
             elif cond[0] == "quest":
                 if num_args == 1:
-                    result.quests.append(cond[1])
+                    result.append(QuestCondition(cond[1]))
                 else:
                     raise JsonParserError(
                         raw,
@@ -61,7 +62,7 @@ class JsonParser:
 
             elif cond[0] in ["cutscene", "location"]:
                 if num_args == 1:
-                    result.locations.append(cond[1])
+                    result.append(LocationCondition(cond[1]))
                 else:
                     raise JsonParserError(
                         raw,
@@ -69,12 +70,11 @@ class JsonParser:
                         "location condition",
                         f"expected 1 argument, not {num_args}"
                     )
+
             elif cond[0] == "region":
                 if num_args == 2:
                     mode, region = cond[1:]
-                    if mode not in result.regions:
-                        result.regions[mode] = []
-                    result.regions[mode].append(region)
+                    result.append(RegionCondition(mode, region))
                 else:
                     raise JsonParserError(
                         raw,
@@ -86,7 +86,7 @@ class JsonParser:
                 raise JsonParserError(raw, cond, "condition", f"unknown type {cond[0]}")
 
         # Return None if there are no conditions
-        return result if not result.is_empty() else None
+        return result
 
     def parse_location(self, name, raw: dict[str, typing.Any], code: typing.Optional[int]) -> LocationData:
         region = {}

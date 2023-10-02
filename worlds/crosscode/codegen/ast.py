@@ -3,40 +3,32 @@ import ast
 
 from BaseClasses import ItemClassification
 
-from ..types.Locations import Condition, LocationData
+from ..types.Condition import Condition, ItemCondition
+from ..types.Locations import LocationData
 from ..types.Regions import RegionConnection
 from ..types.Items import ItemData
 
 
 class AstGenerator:
-    def create_ast_call_condition(self, cond: typing.Optional[Condition]) -> ast.expr:
-        if cond is None:
-            return ast.Constant(cond)
+    def create_ast_call_condition(self, condition: Condition) -> ast.Call:
         result = ast.Call(
-            func=ast.Name("Condition"),
+            func=ast.Name(condition.__class__.__name__),
             args=[],
-            keywords=[])
+            keywords=[ast.keyword(arg=key, value=ast.Constant(value)) for key, value in condition.__dict__.items()],
+        )
+        ast.fix_missing_locations(result)
 
-        if len(cond.items) >= 1:
-            result.keywords.append(ast.keyword(
-                "items",
-                ast.List([ ast.Tuple([ast.Constant(s), ast.Constant(i)]) for s, i in cond.items])))
-        if len(cond.quests) >= 1:
-            result.keywords.append(ast.keyword(
-                "quests",
-                ast.List([ast.Constant(s) for s in cond.quests])))
-        if len(cond.locations) >= 1:
-            result.keywords.append(ast.keyword(
-                "locations",
-                ast.List([ast.Constant(s) for s in cond.locations])))
-        if len(cond.regions) >= 1:
-            result.keywords.append(ast.keyword(
-                "regions",
-                ast.Dict(
-                    keys=[ast.Constant(s) for s in cond.regions.keys()],
-                    values=[ast.Constant(s) for s in cond.regions.values()]
-                )
-            ))
+        return result
+
+    def create_ast_call_condition_list(self, conditions: typing.Optional[list[Condition]]) -> ast.expr:
+        if conditions is None:
+            return ast.Constant(None)
+        result = ast.List(elts=[])
+
+        for condition in conditions:
+            result.elts.append(self.create_ast_call_condition(condition))
+
+        ast.fix_missing_locations(result)
         return result
 
     def create_ast_call_location(self, data: LocationData) -> ast.Call:
@@ -72,7 +64,7 @@ class AstGenerator:
         if data.cond is not None and len(data.cond) > 0:
             ast_item.keywords.append(ast.keyword(
                 arg="cond",
-                value=self.create_ast_call_condition(data.cond)
+                value=self.create_ast_call_condition_list(data.cond)
             ))
 
         if data.clearance != "Default":
@@ -136,7 +128,7 @@ class AstGenerator:
                 ),
                 ast.keyword(
                     arg="cond",
-                    value=self.create_ast_call_condition(conn.cond)
+                    value=self.create_ast_call_condition_list(conn.cond)
                 ),
             ]
         )

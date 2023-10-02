@@ -1,11 +1,11 @@
 import typing
 
-from .Locations import Condition
+from .Condition import Condition
 
 class RegionConnection(typing.NamedTuple):
     region_from: str
     region_to: str
-    cond: typing.Optional[Condition]
+    cond: typing.Optional[list[Condition]]
 
 class RegionsData(typing.NamedTuple):
     starting_region: str
