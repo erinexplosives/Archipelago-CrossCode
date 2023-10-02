@@ -1,6 +1,7 @@
 {{generated_comment | indent("# ", True)}}
 
-from .types.Locations import Condition, LocationData
+from .types.Locations import LocationData
+from .types.Condition import *
 
 needed_items = {{needed_items}}
 

@@ -2,7 +2,7 @@
 
 import typing
 
-from .Locations import Condition
+from .Condition import *
 
 modes = [ {{ modes_string }} ]
 default_mode = "{{ default_mode }}"

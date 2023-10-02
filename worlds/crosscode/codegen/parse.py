@@ -125,6 +125,8 @@ class JsonParser:
         else:
             raise JsonParserError(raw, raw, "item reward", "expected one or two elements")
 
+        full_name = name if amount == 1 else f"{name} x{amount}"
+
         if name not in self.ctx.rando_data["items"]:
             raise JsonParserError(raw, name, "item reward", "item does not exist in randomizer data")
         item_overrides = self.ctx.rando_data["items"][name]
@@ -144,7 +146,7 @@ class JsonParser:
             cls = getattr(ItemClassification, cls_str)
 
         return ItemData(
-            name=name,
+            name=full_name,
             item_id=item_overrides["id"],
             amount=amount,
             combo_id=combo_id,

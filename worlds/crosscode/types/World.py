@@ -11,4 +11,4 @@ class WorldInfo(typing.NamedTuple):
     events_data: list[LocationData]
     num_needed_items: dict[str, int]
 
-    items_data: list[ItemData]
+    items_dict: dict[typing.Tuple[str, int], ItemData]

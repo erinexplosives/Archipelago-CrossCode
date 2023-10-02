@@ -102,13 +102,10 @@ class WorldBuilder:
 
         self.region_packs = self.json_parser.parse_regions_data_list(self.ctx.rando_data["regions"])
 
-        items_data = [item for item in self.items_dict.values()]
-        items_data.sort()
-
         return WorldInfo(
             region_packs=self.region_packs,
             locations_data=self.locations_data,
             events_data=self.events_data,
             num_needed_items=self.num_needed_items,
-            items_data=items_data
+            items_dict=self.items_dict,
         )

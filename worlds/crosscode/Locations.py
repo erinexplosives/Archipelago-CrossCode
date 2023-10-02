@@ -3,7 +3,8 @@
 # If you need to change something here, check out codegen.py and the templates directory.
 
 
-from .types.Locations import Condition, LocationData
+from .types.Locations import LocationData
+from .types.Condition import *
 
 needed_items = {}
 

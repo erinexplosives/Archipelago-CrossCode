@@ -51,7 +51,6 @@ class FileGenerator:
         template = self.environment.get_template("Locations.template.py")
 
         code_locations_data = emit_list([self.ast_generator.create_ast_call_location(loc) for loc in world.locations_data])
-
         code_events_data =  emit_list([self.ast_generator.create_ast_call_location(loc) for loc in world.events_data])
 
         locations_complete = template.render(
@@ -62,18 +61,17 @@ class FileGenerator:
             f.write(locations_complete)
 
         # ITEMS
-        # template = self.environment.get_template("Items.template.py")
+        template = self.environment.get_template("Items.template.py")
 
-        # found_item_keys = list(dict.keys(self.state.found_items))
-        # found_item_keys.sort()
+        sorted_item_data = [(data.combo_id, data) for data in world.items_dict.values()]
+        sorted_item_data.sort()
 
-        # code_item_list = [ast.unparse(self.state.found_items[k])
-        #                   for k in found_item_keys]
-        # code = ",\n".join(code_item_list)
-        # items_complete = template.render(items_data=code, **self.common_args)
+        code_item_list = [ast.unparse(self.ast_generator.create_ast_call_item(v)) for _, v in sorted_item_data]
+        code = ",\n".join(code_item_list)
+        items_complete = template.render(items_data=code, **self.common_args)
 
-        # with open("Items.py", "w") as f:
-        #     f.write(items_complete)
+        with open(os.path.join(self.world_dir, "Items.py"), "w") as f:
+            f.write(items_complete)
 
         # # REGIONS
         # template = self.environment.get_template("Regions.template.py")

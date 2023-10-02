@@ -106,7 +106,10 @@ class AstGenerator:
                 ),
                 ast.keyword(
                     arg="quantity",
-                    value=ast.Dict(keys=[], values=[])
+                    value=ast.Dict(
+                        keys=[ast.Constant(k) for k in data.quantity.keys()],
+                        values=[ast.Constant(v) for v in data.quantity.values()]
+                    )
                 ),
             ]
         )
