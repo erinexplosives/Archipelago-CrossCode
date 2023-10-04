@@ -6,12 +6,15 @@ from BaseClasses import Location, Region
 from .Condition import Condition
 
 @dataclass
-class LocationData:
-    name: str
-    code: typing.Optional[int]
+class AccessInfo:
     region: typing.Dict[str, str]
     cond: typing.Optional[list[Condition]] = None
     clearance: str = "Default"
+
+@dataclass
+class LocationData:
+    name: str
+    code: typing.Optional[int]
 
 class CrossCodeLocation(Location):
     game: str = "CrossCode"

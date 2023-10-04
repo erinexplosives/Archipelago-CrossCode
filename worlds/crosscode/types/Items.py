@@ -7,7 +7,6 @@ class ItemData(typing.NamedTuple):
     amount: int
     combo_id: int
     classification: ItemClassification
-    quantity: typing.Dict[str, int]
 
     def __hash__(self):
         return hash((self.item_id, self.amount))

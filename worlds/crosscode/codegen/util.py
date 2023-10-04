@@ -43,21 +43,21 @@ def load_json_with_includes(filename: str) -> typing.Dict[str, typing.Any]:
     return master
 
 
-def load_world_json(filename: str) -> tuple[dict[str, typing.Any], list[dict[str, typing.Any]]]:
+def load_world_json(filename: str) -> tuple[dict[str, typing.Any], dict[str, dict[str, typing.Any]]]:
     master = load_json_with_includes(filename)
     dirname = os.path.dirname(filename)
 
     if "addons" not in master:
-        return (master, [])
+        return (master, {})
 
     addons = master.pop("addons")
-    loaded_addons = []
+    loaded_addons = {}
     for addon_name in addons:
         subfile = load_json_with_includes(
             os.path.join(dirname, "addons", addon_name, "master.json")
         )
 
-        loaded_addons.append(subfile)
+        loaded_addons[addon_name] = subfile
 
     return master, loaded_addons
 

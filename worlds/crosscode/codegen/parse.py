@@ -7,7 +7,7 @@ from .context import Context
 from .util import BASE_ID, RESERVED_ITEM_IDS, get_item_classification
 
 from ..types.Items import ItemData
-from ..types.Locations import Condition, LocationData
+from ..types.Locations import AccessInfo, Condition
 from ..types.Regions import RegionConnection, RegionsData
 from ..types.Condition import ItemCondition, LocationCondition, QuestCondition, RegionCondition
 
@@ -88,7 +88,7 @@ class JsonParser:
         # Return None if there are no conditions
         return result
 
-    def parse_location(self, name, raw: dict[str, typing.Any], code: typing.Optional[int]) -> LocationData:
+    def parse_location_access_info(self, raw: dict[str, typing.Any]) -> AccessInfo:
         region = {}
         if "region" in raw:
             region = raw["region"]
@@ -110,7 +110,7 @@ class JsonParser:
         if "condition" in raw:
             condition = self.parse_condition(raw["condition"])
 
-        return LocationData(name, code, region, condition, clearance)
+        return AccessInfo(region, condition, clearance)
 
     def parse_item(self, raw: list[typing.Any]) -> ItemData:
         name = ""
@@ -151,7 +151,6 @@ class JsonParser:
             amount=amount,
             combo_id=combo_id,
             classification=cls,
-            quantity={}
         )
 
     def parse_element_item(self, raw: list[typing.Any]) -> ItemData:
@@ -175,7 +174,6 @@ class JsonParser:
             amount=1,
             combo_id=combo_id,
             classification=ItemClassification.progression,
-            quantity={}
         )
 
     def parse_reward(self, raw: list[typing.Any]) -> ItemData:

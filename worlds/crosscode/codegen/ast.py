@@ -1,9 +1,7 @@
 import typing
 import ast
 
-from BaseClasses import ItemClassification
-
-from ..types.Condition import Condition, ItemCondition
+from ..types.Condition import Condition
 from ..types.Locations import LocationData
 from ..types.Regions import RegionConnection
 from ..types.Items import ItemData
@@ -32,13 +30,6 @@ class AstGenerator:
         return result
 
     def create_ast_call_location(self, data: LocationData) -> ast.Call:
-        keys: typing.List[ast.Constant] = []
-        values: typing.List[ast.Constant] = []
-
-        for k, v in data.region.items():
-            keys.append(ast.Constant(k))
-            values.append(ast.Constant(v))
-
         ast_item = ast.Call(
             func=ast.Name("LocationData"),
             args=[],
@@ -51,27 +42,8 @@ class AstGenerator:
                     arg="code",
                     value=ast.Constant(data.code)
                 ),
-                ast.keyword(
-                    arg="region",
-                    value=ast.Dict(
-                        keys=keys,
-                        values=values
-                    )
-                ),
             ]
         )
-
-        if data.cond is not None and len(data.cond) > 0:
-            ast_item.keywords.append(ast.keyword(
-                arg="cond",
-                value=self.create_ast_call_condition_list(data.cond)
-            ))
-
-        if data.clearance != "Default":
-            ast_item.keywords.append(ast.keyword(
-                arg="clearance",
-                value=ast.Constant(data.clearance)
-            ))
 
         ast.fix_missing_locations(ast_item)
         return ast_item
@@ -102,13 +74,6 @@ class AstGenerator:
                     value=ast.Attribute(
                         value=ast.Name("ItemClassification"),
                         attr=data.classification.name
-                    )
-                ),
-                ast.keyword(
-                    arg="quantity",
-                    value=ast.Dict(
-                        keys=[ast.Constant(k) for k in data.quantity.keys()],
-                        values=[ast.Constant(v) for v in data.quantity.values()]
                     )
                 ),
             ]
