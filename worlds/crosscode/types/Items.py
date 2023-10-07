@@ -1,18 +1,23 @@
+from ..codegen.util import BASE_ID, RESERVED_ITEM_IDS
+from dataclasses import dataclass, field
 import typing
 from BaseClasses import Item, ItemClassification
 
-class ItemData(typing.NamedTuple):
+@dataclass
+class SingleItemData:
     name: str
     item_id: int
-    amount: int
-    combo_id: int
     classification: ItemClassification
 
-    def __hash__(self):
-        return hash((self.item_id, self.amount))
+@dataclass
+class ItemData:
+    item: SingleItemData
+    amount: int
+    combo_id: int
+    name: str = field(init=False)
 
-    def __eq__(self, other):
-        return self.item_id == other.item_id and self.amount == other.amount
+    def __post_init__(self):
+        self.name = self.item.name if self.amount == 1 else f"{self.item.name} x{self.amount}"
 
 class CrossCodeItem(Item):
     game: str = "CrossCode"
@@ -20,8 +25,8 @@ class CrossCodeItem(Item):
 
     def __init__(self, player: int, data: ItemData):
         super(CrossCodeItem, self).__init__(
-            data.name,
-            data.classification,
+            data.item.name,
+            data.item.classification,
             data.combo_id,
             player,
         )

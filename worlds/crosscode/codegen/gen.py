@@ -58,12 +58,12 @@ class FileGenerator:
         # ITEMS
         template = self.environment.get_template("Items.template.py")
 
-        sorted_item_data = [(data.combo_id, data) for data in self.lists.items_dict.values()]
+        sorted_item_data = [(data.item_id, data) for data in self.lists.single_items_dict.values()]
         sorted_item_data.sort()
 
         code_item_list = [ast.unparse(self.ast_generator.create_ast_call_item(v)) for _, v in sorted_item_data]
         code = ",\n".join(code_item_list)
-        items_complete = template.render(items_data=code, **self.common_args)
+        items_complete = template.render(items_data=code, num_items=self.ctx.num_items, **self.common_args)
 
         with open(os.path.join(self.world_dir, "Items.py"), "w") as f:
             f.write(items_complete)

@@ -6,7 +6,7 @@ from BaseClasses import ItemClassification
 from .context import Context
 from .util import BASE_ID, RESERVED_ITEM_IDS, get_item_classification
 
-from ..types.Items import ItemData
+from ..types.Items import ItemData, SingleItemData
 from ..types.Locations import AccessInfo, Condition
 from ..types.Regions import RegionConnection, RegionsData
 from ..types.Condition import ItemCondition, LocationCondition, QuestCondition, RegionCondition
@@ -25,8 +25,13 @@ class JsonParserError(Exception):
 class JsonParser:
     ctx: Context
 
+    single_items_dict: dict[str, SingleItemData]
+    items_dict: dict[tuple[str, int], ItemData]
+
     def __init__(self, ctx: Context):
         self.ctx = ctx
+        self.single_items_dict = {}
+        self.items_dict = {}
 
     def parse_condition(self, raw: list[typing.Any]) -> list[Condition]:
         result: list[Condition] = []
@@ -112,10 +117,26 @@ class JsonParser:
 
         return AccessInfo(region, condition, clearance)
 
-    def parse_item(self, raw: list[typing.Any]) -> ItemData:
-        name = ""
-        amount = 0
+    def parse_item_data(self, name: str, raw: dict[str, typing.Any]) -> SingleItemData:
+        item_id = raw["id"]
 
+        db_entry = self.ctx.item_data[item_id]
+
+        cls = get_item_classification(db_entry)
+
+        if "classification" in raw:
+            cls_str = raw["classification"]
+            if not hasattr(ItemClassification, cls_str):
+                raise JsonParserError(raw, cls_str, "item reward", "invalid classification")
+            cls = getattr(ItemClassification, cls_str)
+
+        return SingleItemData(
+            name=name,
+            item_id=raw["id"],
+            classification=cls,
+        )
+
+    def parse_item_reward(self, raw: list[typing.Any]) -> ItemData:
         if len(raw) == 1:
             name = raw[0]
             amount = 1
@@ -125,36 +146,31 @@ class JsonParser:
         else:
             raise JsonParserError(raw, raw, "item reward", "expected one or two elements")
 
-        full_name = name if amount == 1 else f"{name} x{amount}"
+        try:
+            return self.items_dict[name, amount]
+        except KeyError:
+            pass
 
-        if name not in self.ctx.rando_data["items"]:
-            raise JsonParserError(raw, name, "item reward", "item does not exist in randomizer data")
-        item_overrides = self.ctx.rando_data["items"][name]
-        item_id = item_overrides["id"]
+        try:
+            single_item = self.single_items_dict[name]
+        except KeyError:
+            if name not in self.ctx.rando_data["items"]:
+                raise JsonParserError(raw, name, "item reward", "item does not exist in randomizer data")
+            item_overrides = self.ctx.rando_data["items"][name]
 
-        db_entry = self.ctx.item_data[item_id]
+            single_item = self.parse_item_data(name, item_overrides)
+            self.single_items_dict[name] = single_item
 
         combo_id = BASE_ID + RESERVED_ITEM_IDS + \
-            self.ctx.num_items * (amount - 1) + item_id
-
-        cls = get_item_classification(db_entry)
-
-        if "classification" in item_overrides:
-            cls_str = item_overrides["classification"]
-            if not hasattr(ItemClassification, cls_str):
-                raise JsonParserError(item_overrides, cls_str, "item reward", "invalid classification")
-            cls = getattr(ItemClassification, cls_str)
+            self.ctx.num_items * (amount - 1) + single_item.item_id
 
         return ItemData(
-            name=full_name,
-            item_id=item_overrides["id"],
+            item=single_item,
             amount=amount,
             combo_id=combo_id,
-            classification=cls,
         )
 
-    def parse_element_item(self, raw: list[typing.Any]) -> ItemData:
-        el = ""
+    def parse_element_reward(self, raw: list[typing.Any]) -> ItemData:
         combo_id = BASE_ID
 
         if len(raw) == 1:
@@ -163,26 +179,38 @@ class JsonParser:
             raise JsonParserError(raw, raw, "element reward", "expected one string")
 
         try:
+            return self.items_dict[el, 1]
+        except KeyError:
+            pass
+
+        try:
+            single_item = self.single_items_dict[el]
+        except KeyError:
+            single_item = SingleItemData("Heat", 0, ItemClassification.progression)
+            self.single_items_dict[el] = single_item
+
+        try:
             idx = ["Heat", "Cold", "Shock", "Wave"].index(el)
             combo_id += idx
         except:
             raise RuntimeError("Error adding element: {el} not an element")
 
-        return ItemData(
-            name=el,
-            item_id=0,
+        item = ItemData(
+            item=single_item,
             amount=1,
-            combo_id=combo_id,
-            classification=ItemClassification.progression,
+            combo_id=combo_id
         )
+
+        self.items_dict[el, 1] = item
+        return item
 
     def parse_reward(self, raw: list[typing.Any]) -> ItemData:
         kind, *info = raw
 
         if kind == "item":
-            return self.parse_item(info)
+            return self.parse_item_reward(info)
         elif kind == "element":
-            return self.parse_element_item(info)
+            return self.parse_element_reward(info)
         else:
             raise RuntimeError(f"Error parsing reward {raw}: unrecognized type")
 

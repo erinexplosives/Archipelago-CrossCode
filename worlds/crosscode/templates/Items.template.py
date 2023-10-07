@@ -1,9 +1,11 @@
 {{generated_comment | indent("# ", True)}}
 
 from BaseClasses import ItemClassification
-from .types.Items import ItemData
+from .types.Items import SingleItemData
 
-items_data = [
+num_types = {{num_items}}
+
+items_data: list[SingleItemData] = [
     {{items_data | indent(4)}}
 ]
 

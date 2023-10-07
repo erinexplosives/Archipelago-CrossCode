@@ -4,7 +4,7 @@ import ast
 from ..types.Condition import Condition
 from ..types.Locations import LocationData
 from ..types.Regions import RegionConnection
-from ..types.Items import ItemData
+from ..types.Items import ItemData, SingleItemData
 
 
 class AstGenerator:
@@ -35,12 +35,12 @@ class AstGenerator:
             args=[],
             keywords=[
                 ast.keyword(
-                    arg="name",
-                    value=ast.Constant(data.name)
-                ),
-                ast.keyword(
                     arg="code",
                     value=ast.Constant(data.code)
+                ),
+                ast.keyword(
+                    arg="name",
+                    value=ast.Constant(data.name)
                 ),
             ]
         )
@@ -48,26 +48,18 @@ class AstGenerator:
         ast.fix_missing_locations(ast_item)
         return ast_item
 
-    def create_ast_call_item(self, data: ItemData):
+    def create_ast_call_item(self, data: SingleItemData):
         ast_item = ast.Call(
-            func=ast.Name("ItemData"),
+            func=ast.Name("SingleItemData"),
             args=[],
             keywords=[
-                ast.keyword(
-                    arg="name",
-                    value=ast.Constant(data.name)
-                ),
                 ast.keyword(
                     arg="item_id",
                     value=ast.Constant(data.item_id)
                 ),
                 ast.keyword(
-                    arg="amount",
-                    value=ast.Constant(data.amount)
-                ),
-                ast.keyword(
-                    arg="combo_id",
-                    value=ast.Constant(data.combo_id)
+                    arg="name",
+                    value=ast.Constant(data.name)
                 ),
                 ast.keyword(
                     arg="classification",

@@ -5,7 +5,7 @@ from .parse import JsonParser
 from .context import Context
 from .util import BASE_ID
 
-from ..types.Items import ItemData
+from ..types.Items import ItemData, SingleItemData
 from ..types.Locations import LocationData
 
 
@@ -17,8 +17,8 @@ class ListInfo:
 
     locations_data: dict[str, LocationData]
     events_data: dict[str, LocationData]
-    
-    items_dict: dict[tuple[str, int], ItemData]
+
+    single_items_dict: dict[str, SingleItemData]
 
     reward_amounts: dict[str, int]
 
@@ -31,9 +31,11 @@ class ListInfo:
         self.locations_data = {}
         self.events_data = {}
 
-        self.items_dict = {}
+        self.single_items_dict = {}
         
         self.reward_amounts = {}
+
+        self.__add_item_list(self.ctx.rando_data["items"])
 
         for file in [self.ctx.rando_data, *self.ctx.addons.values()]:
             if "chests" in file: self.__add_location_list(file["chests"])
@@ -77,15 +79,13 @@ class ListInfo:
             )
             self.events_data[event_name] = event
 
-        if "reward" in raw_loc:
-            for reward in raw_loc["reward"]:
-                item = self.json_parser.parse_reward(reward) 
-                key = (item.name, item.amount)
-                if key in self.items_dict:
-                    item = self.items_dict[key]
-                elif key not in self.items_dict:
-                    self.items_dict[key] = item
-
     def __add_location_list(self, loc_list: dict[str, dict[str, typing.Any]], create_events=False):
-            for name, raw_loc in loc_list.items():
-                self.__add_location(name, raw_loc, create_events)
+        for name, raw_loc in loc_list.items():
+            self.__add_location(name, raw_loc, create_events)
+
+    def __add_item(self, name: str, raw_item: dict[str, typing.Any]):
+        self.single_items_dict[name] = self.json_parser.parse_item_data(name, raw_item)
+
+    def __add_item_list(self, item_list: dict[str, dict[str, typing.Any]]):
+        for name, raw_item in item_list.items():
+            self.__add_item(name, raw_item)
