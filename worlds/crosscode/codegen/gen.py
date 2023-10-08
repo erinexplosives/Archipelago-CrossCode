@@ -31,6 +31,7 @@ class FileGenerator:
         self.environment = jinja2.Environment(
             loader=jinja2.FileSystemLoader(template_dir))
         self.lists = ListInfo(self.ctx)
+        self.lists.build()
 
         self.world_dir = world_dir
         self.data_out_dir = data_out_dir

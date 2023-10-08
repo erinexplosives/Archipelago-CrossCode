@@ -1,7 +1,7 @@
 import ast
 import typing
 
-from ..types.World import WorldInfo
+from ..types.World import WorldData
 
 def emit_list(lst: list[ast.AST], indent: str = "    ") -> str:
     after = ",\n"

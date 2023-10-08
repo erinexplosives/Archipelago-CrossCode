@@ -1,7 +1,7 @@
 from functools import reduce
 from test.TestBase import WorldTestBase
 from . import CrossCodeTestBase
-from ..Items import items_data, items_dict
+from ..Items import single_items_data, single_items_dict
 from ..Locations import locations_data, events_data, needed_items
 from ..Regions import modes, region_packs
 
@@ -28,7 +28,7 @@ class TestItemQuantities(CrossCodeTestBase):
                     number_of_locations += 1
 
             items_from_locations = 0
-            for item in items_data:
+            for item in single_items_data:
                 if mode in item.quantity:
                     items_from_locations += item.quantity[mode]
 

@@ -1,33 +1,43 @@
+import traceback
 import sys
 import typing
 from BaseClasses import ItemClassification, Location, LocationProgressType, Region, Item
 from worlds.AutoWorld import WebWorld, World
+from worlds.crosscode.types.Condition import LocationCondition
 from worlds.generic.Rules import add_rule, set_rule
+
+from .codegen.context import Context, make_context_from_directory
 
 from .Common import *
 from .Logic import condition_satisfied, has_clearance
 
 from .types.Items import CrossCodeItem
 from .types.Locations import Condition, CrossCodeLocation
+from .types.World import WorldData
 from .types.Regions import RegionsData
-from .Options import Reachability, crosscode_options
+from .Options import Reachability, crosscode_options, addon_options
+from .Builder import WorldBuilder
 
 loaded_correctly = True
 
 try:
-    from .Items import items_data, items_dict
-    from .Locations import locations_data, locations_dict, events_data, needed_items
-    from .Regions import region_packs, modes
-except ImportError:
+    from .Items import single_items_data, single_items_dict, items_by_full_name
+    from .Locations import locations_data, locations_dict, events_data
+    from .Regions import modes
+except ImportError as e:
     loaded_correctly = False
     print("Failed to import items, locations, or regions, probably due to faulty code generation.", file=sys.stderr)
-    items_data = []
-    items_dict = []
+    traceback.print_exception(*sys.exc_info())
+    print(e, file=sys.stderr)
+    single_items_data = []
+    single_items_dict = []
+    items_by_full_name = {}
     locations_data = []
     locations_dict = {}
     events_data = []
-    needed_items = {}
-    crosscode_options = []
+    crosscode_options = {}
+
+world_data_dict: dict[typing.Any, WorldData] = {}
 
 class CrossCodeWebWorld(WebWorld):
     theme="ocean"
@@ -54,7 +64,7 @@ class CrossCodeWorld(World):
     # items exist. They could be generated from json or something else. They can
     # include events, but don't have to since events will be placed manually.
     item_name_to_id = {
-        item.name : item.combo_id for item in items_data
+        # item.name : item.combo_id for item in items_data
     }
 
     location_name_to_id = {
@@ -67,6 +77,12 @@ class CrossCodeWorld(World):
 
     location_events: dict[str, Location]
 
+    world_data: WorldData
+
+    addons: list[str]
+
+    ctx: Context = make_context_from_directory("worlds/crosscode/data")
+
     def register_reachability(self, option: Reachability, items: typing.Iterable[str]):
         if option == Reachability.option_local:
             local_items = self.multiworld.local_items[self.player].value
@@ -78,28 +94,41 @@ class CrossCodeWorld(World):
                 non_local_items.add(item)
 
     def create_location(self, location: str, event_from_location=False) -> CrossCodeLocation:
-        return CrossCodeLocation(self.player, locations_dict[location], self.logic_mode, self.region_dict, event_from_location=event_from_location)
+        data, access = self.world_data.locations_data[location]
+        return CrossCodeLocation(self.player, data, access, self.logic_mode, self.region_dict, event_from_location=event_from_location)
 
     def create_item(self, item: str) -> CrossCodeItem:
-        return CrossCodeItem(self.player, items_dict[item])
+        return CrossCodeItem(self.player, items_by_full_name[item])
 
-    def create_event_conditions(self, condition: typing.Optional[Condition]):
+    def create_event_conditions(self, condition: typing.Optional[list[Condition]]):
         if condition is None:
             return
 
-        for name in condition.locations:
-            if name not in self.location_events:
+        for c in condition:
+            if isinstance(c, LocationCondition):
+                name = c.location_name
                 location = self.create_location(name, event_from_location=True)
                 self.location_events[name] = location
-                self.region_dict[location.data.region[self.logic_mode]].locations.append(location)
+                self.region_dict[location.region].locations.append(location)
                 location.place_locked_item(Item(location.name, ItemClassification.progression, None, self.player))
 
     def generate_early(self):
+        self.addons = [name for name in addon_options if getattr(self.multiworld, name)[self.player]]
+
+        addonTuple = tuple(self.addons)
+
+        if addonTuple in world_data_dict:
+            self.world_data = world_data_dict[addonTuple]
+        else:
+            self.world_data = WorldBuilder(self.ctx).build(self.addons)
+            items_by_full_name.update({item.name: item for item, _ in self.world_data.items_dict.values()})
+            world_data_dict[addonTuple] = self.world_data
+
         if not loaded_correctly:
             raise RuntimeError("Attempting to generate a CrossCode World after unsuccessful code generation")
         start_inventory = self.multiworld.start_inventory[self.player].value
         self.logic_mode = modes[self.multiworld.logic_mode[self.player].value]
-        self.region_pack = region_packs[self.logic_mode]
+        self.region_pack = self.world_data.region_packs[self.logic_mode]
 
         if self.multiworld.start_with_green_leaf_shade[self.player].value:
             start_inventory["Green Leaf Shade"] = 1
@@ -117,7 +146,6 @@ class CrossCodeWorld(World):
         )
 
         self.register_reachability(element_loc, ("Heat", "Cold", "Shock", "Wave"))
-
 
     def create_regions(self):
         self.region_dict = {name: Region(name, self.player, self.multiworld) for name in self.region_pack.region_list}
@@ -141,21 +169,20 @@ class CrossCodeWorld(World):
 
             self.region_dict[conn.region_from].locations.append(connection_event)
 
-
         menu_region = Region("Menu", self.player, self.multiworld)
         menu_region.add_exits({self.region_pack.starting_region: "login"})
         self.multiworld.regions.append(menu_region)
 
         for name, region in self.region_dict.items():
-            for data in locations_data:
-                if self.logic_mode in data.region and data.region[self.logic_mode] == name:
-                    location = CrossCodeLocation(self.player, data, self.logic_mode, self.region_dict)
+            for data, access_info in self.world_data.locations_data.values():
+                if self.logic_mode in access_info.region and access_info.region[self.logic_mode] == name:
+                    location = CrossCodeLocation(self.player, data, access_info, self.logic_mode, self.region_dict)
                     region.locations.append(location)
-                    self.create_event_conditions(location.data.cond)
+                    self.create_event_conditions(access_info.cond)
 
-            for data in events_data:
-                if self.logic_mode in data.region and data.region[self.logic_mode] == name:
-                    location = CrossCodeLocation(self.player, data, self.logic_mode, self.region_dict)
+            for data, access_info in self.world_data.events_data.values():
+                if self.logic_mode in access_info.region and access_info.region[self.logic_mode] == name:
+                    location = CrossCodeLocation(self.player, data, access_info, self.logic_mode, self.region_dict)
                     region.locations.append(location)
                     location.place_locked_item(Item(location.data.name, ItemClassification.progression, None, self.player))
 
@@ -178,11 +205,11 @@ class CrossCodeWorld(World):
     def create_items(self):
         exclude = self.multiworld.precollected_items[self.player][:]
 
-        for data in items_data:
-            if self.logic_mode not in data.quantity:
+        for (data, quantity) in self.world_data.items_dict.values():
+            if self.logic_mode not in quantity:
                 continue
 
-            for _ in range(data.quantity[self.logic_mode]):
+            for _ in range(quantity[self.logic_mode]):
                 item = CrossCodeItem(self.player, data)
                 try:
                     idx = exclude.index(item)
@@ -191,20 +218,20 @@ class CrossCodeWorld(World):
                     continue
 
                 exclude.pop(idx)
-                self.multiworld.itempool.append(self.create_item("Sandwich"))
+                self.multiworld.itempool.append(self.create_item("Sandwich x3"))
 
-        for _ in range(needed_items[self.logic_mode]):
-            self.multiworld.itempool.append(self.create_item("Sandwich"))
+        for _ in range(self.world_data.num_needed_items[self.logic_mode]):
+            self.multiworld.itempool.append(self.create_item("Sandwich x3"))
 
     def set_rules(self):
         for _, region in self.region_dict.items():
             for loc in region.locations:
                 if not isinstance(loc, CrossCodeLocation):
                     continue
-                if loc.data.cond is not None:
-                    add_rule(loc, condition_satisfied(self.player, self.logic_mode, loc.data.cond))
-                if loc.data.clearance != "Default":
-                    add_rule(loc, has_clearance(self.player, loc.data.clearance))
+                if loc.access.cond is not None:
+                    add_rule(loc, condition_satisfied(self.player, self.logic_mode, loc.access.cond))
+                if loc.access.clearance != "Default":
+                    add_rule(loc, has_clearance(self.player, loc.access.clearance))
 
     def fill_slot_data(self):
         return {

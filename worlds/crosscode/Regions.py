@@ -5,7 +5,8 @@
 
 import typing
 
-from .Condition import *
+from .types.Regions import RegionConnection, RegionsData
+from .types.Condition import *
 
 modes = [ "linear", "open" ]
 default_mode = "open"

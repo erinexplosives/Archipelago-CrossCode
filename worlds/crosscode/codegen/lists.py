@@ -35,6 +35,7 @@ class ListInfo:
         
         self.reward_amounts = {}
 
+    def build(self):
         self.__add_item_list(self.ctx.rando_data["items"])
 
         for file in [self.ctx.rando_data, *self.ctx.addons.values()]:

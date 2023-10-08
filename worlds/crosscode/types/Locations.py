@@ -19,18 +19,20 @@ class LocationData:
 class CrossCodeLocation(Location):
     game: str = "CrossCode"
     data: LocationData
+    access: AccessInfo
     region: str
 
-    def __init__(self, player: int, data: LocationData, mode, region_dict: dict[str, Region], event_from_location=False):
+    def __init__(self, player: int, data: LocationData, access: AccessInfo, mode, region_dict: dict[str, Region], event_from_location=False):
         event_from_location = event_from_location and data.code is not None
 
         super(CrossCodeLocation, self).__init__(
             player,
             data.name if not event_from_location else data.name + " (Event)",
             data.code if not event_from_location else None,
-            region_dict[data.region[mode]]
+            region_dict[access.region[mode]]
         )
 
         self.data = data
+        self.access = access
         self.event = False
-        self.region = data.region[mode]
+        self.region = access.region[mode]

@@ -4,11 +4,11 @@
 
 
 from BaseClasses import ItemClassification
-from .types.Items import SingleItemData
+from .types.Items import ItemData, SingleItemData
 
 num_types = 676
 
-items_data: list[SingleItemData] = [
+single_items_data: list[SingleItemData] = [
     SingleItemData(item_id=0, name='Golden Triangle', classification=ItemClassification.filler),
     SingleItemData(item_id=1, name='Sandwich', classification=ItemClassification.filler),
     SingleItemData(item_id=2, name='Green Leaf Tea', classification=ItemClassification.filler),
@@ -661,4 +661,6 @@ items_data: list[SingleItemData] = [
     SingleItemData(item_id=675, name='Nightfeather Coat', classification=ItemClassification.useful)
 ]
 
-items_dict = {data.name: data for data in items_data}
+single_items_dict = {data.name: data for data in single_items_data}
+
+items_by_full_name: dict[str, ItemData] = {}

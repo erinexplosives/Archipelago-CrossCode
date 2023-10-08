@@ -1,14 +1,16 @@
 import typing
 
 from .ast import AstGenerator
+from .lists import ListInfo
 from .parse import JsonParser
 from .context import Context
 from .util import BASE_ID, RESERVED_ITEM_IDS
 
-from ..types.Items import ItemData
+
+from ..types.Items import ItemData, SingleItemData
 from ..types.Locations import LocationData
 from ..types.Regions import RegionsData
-from ..types.World import WorldInfo
+from ..types.World import WorldData
 
 class WorldBuilder:
     ctx: Context
@@ -18,13 +20,9 @@ class WorldBuilder:
 
     region_packs: dict[str, RegionsData]
 
-    locations_data: list[LocationData]
-    events_data: list[LocationData]
     num_needed_items: dict[str,int]
-    
-    items_dict: dict[tuple[str, int], ItemData]
 
-    def __init__(self, ctx: Context):
+    def __init__(self, ctx: Context, lists: ListInfo):
         self.ctx = ctx
 
         self.ast_generator = AstGenerator()
@@ -32,11 +30,7 @@ class WorldBuilder:
 
         self.region_packs = {}
 
-        self.locations_data = []
-        self.events_data = []
         self.num_needed_items = {}
-
-        self.items_dict = {}
 
     def __add_location(self, name: str, raw_loc: dict[str, typing.Any], create_event=False):
         num_rewards = 1
@@ -57,16 +51,16 @@ class WorldBuilder:
             loc = self.json_parser.parse_location(full_name, raw_loc, self.current_location_code)
             self.current_location_code += 1
 
-            self.locations_data.append(loc)
+            self.locations_dict.append(loc)
 
         if num_rewards > 1 or create_event:
-            prev_loc = self.locations_data[-1]
+            prev_loc = self.locations_dict[-1]
             event = LocationData(
                 name=f"{name} (Event)",
                 code=None,
                 region=prev_loc.region,
                 cond=prev_loc.cond)
-            self.events_data.append(event)
+            self.events_dict.append(event)
 
         if "reward" not in raw_loc or len(raw_loc["reward"]) == 0:
             for mode in raw_loc["region"].keys():
@@ -94,7 +88,7 @@ class WorldBuilder:
         for name, raw_loc in loc_list.items():
             self.__add_location(name, raw_loc, create_events)
 
-    def build(self) -> WorldInfo:
+    def build(self) -> WorldData:
         self.__add_location_list(self.ctx.rando_data["chests"])
         self.__add_location_list(self.ctx.rando_data["cutscenes"])
         self.__add_location_list(self.ctx.rando_data["elements"])
@@ -102,10 +96,10 @@ class WorldBuilder:
 
         self.region_packs = self.json_parser.parse_regions_data_list(self.ctx.rando_data["regions"])
 
-        return WorldInfo(
+        return WorldData(
             region_packs=self.region_packs,
-            locations_data=self.locations_data,
-            events_data=self.events_data,
+            locations_data=self.locations_dict,
+            events_data=self.events_dict,
             num_needed_items=self.num_needed_items,
             items_dict=self.items_dict,
         )

@@ -1,4 +1,4 @@
-from Options import AssembleOptions, Choice, DefaultOnToggle
+from Options import AssembleOptions, Choice, DefaultOnToggle, Toggle
 import typing
 
 class VTShadeLock(DefaultOnToggle):
@@ -6,6 +6,12 @@ class VTShadeLock(DefaultOnToggle):
     If enabled, adds a locked gate before the final dungeon that only opens when all four shades are collected and all four bosses are beaten.
     """
     display_name = "Vermillion Tower Shade Lock"
+
+class QuestRando(Toggle):
+    """
+    If enabled, all quests will be randomized along with chests and cutscene locations.
+    """
+    display_name = "Quest Randomization"
 
 class StartWithGreenLeafShade(DefaultOnToggle):
     """
@@ -41,11 +47,14 @@ class ElementLocations(Reachability):
     display_name = "Element Locations"
 
 crosscode_options_pairs = [
-    ("vt_shade_lock", VTShadeLock),
+    ("vtShadeLock", VTShadeLock),
+    ("questRando", QuestRando),
     ("start_with_green_leaf_shade", StartWithGreenLeafShade),
     ("shade_locations", ShadeLocations),
     ("element_locations", ElementLocations),
 ]
+
+addon_options = ["vtShadeLock", "questRando"]
 
 try:
     from .OptionsGenerated import LogicMode

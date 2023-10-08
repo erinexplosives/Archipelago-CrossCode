@@ -2,7 +2,8 @@
 
 import typing
 
-from .Condition import *
+from .types.Regions import RegionConnection, RegionsData
+from .types.Condition import *
 
 modes = [ {{ modes_string }} ]
 default_mode = "{{ default_mode }}"
