@@ -46,6 +46,9 @@ class ListInfo:
             if "elements" in file: self.__add_location_list(file["elements"])
             if "quests" in file: self.__add_location_list(file["quests"], True)
 
+        # Add any extra items (i.e. elements) that the JSON parser ran into
+        self.single_items_dict.update(self.json_parser.single_items_dict)
+
         for name, data in self.single_items_dict.items():
             if (name, 1) in self.items_dict:
                 continue

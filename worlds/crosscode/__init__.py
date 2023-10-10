@@ -22,9 +22,10 @@ loaded_correctly = True
 
 try:
     from .Builder import WorldBuilder
-    from .Items import single_items_data, single_items_dict, items_by_full_name
+    from .Items import single_items_dict, items_by_full_name
     from .Locations import locations_data, locations_dict, events_data
     from .Regions import modes
+
 except Exception as e:
     loaded_correctly = False
     print("Failed to import items, locations, or regions, probably due to faulty code generation.", file=sys.stderr)
@@ -65,7 +66,7 @@ class CrossCodeWorld(World):
     # items exist. They could be generated from json or something else. They can
     # include events, but don't have to since events will be placed manually.
     item_name_to_id = {
-        # item.name : item.combo_id for item in items_data
+        key: value.combo_id for key, value in items_by_full_name.items()
     }
 
     location_name_to_id = {
@@ -114,6 +115,9 @@ class CrossCodeWorld(World):
                 location.place_locked_item(Item(location.name, ItemClassification.progression, None, self.player))
 
     def generate_early(self):
+        if not loaded_correctly:
+            raise RuntimeError("Attempting to generate a CrossCode World after unsuccessful code generation")
+
         self.addons = [name for name in addon_options if getattr(self.multiworld, name)[self.player]]
 
         addonTuple = tuple(self.addons)
@@ -122,13 +126,8 @@ class CrossCodeWorld(World):
             self.world_data = world_data_dict[addonTuple]
         else:
             self.world_data = WorldBuilder(deepcopy(self.ctx)).build(self.addons)
-            items_by_full_name.update({item.name: item for item, _ in self.world_data.items_dict.values()})
-            self.item_id_to_name.update({data.combo_id: data.name for data, _ in self.world_data.items_dict.values()})
-            self.item_name_to_id.update({data.name: data.combo_id for data, _ in self.world_data.items_dict.values()})
             world_data_dict[addonTuple] = self.world_data
 
-        if not loaded_correctly:
-            raise RuntimeError("Attempting to generate a CrossCode World after unsuccessful code generation")
         start_inventory = self.multiworld.start_inventory[self.player].value
         self.logic_mode = modes[self.multiworld.logic_mode[self.player].value]
         self.region_pack = self.world_data.region_packs[self.logic_mode]
