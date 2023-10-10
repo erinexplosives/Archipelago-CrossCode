@@ -8,7 +8,7 @@ import jinja2
 from .ast import AstGenerator
 from .context import Context, make_context_from_directory
 from .emit import emit_dict, emit_list
-from .util import GENERATED_COMMENT
+from .util import BASE_ID, GENERATED_COMMENT, RESERVED_ITEM_IDS
 from .lists import ListInfo
 
 

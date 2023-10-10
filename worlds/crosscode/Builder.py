@@ -4,10 +4,10 @@ from .codegen.ast import AstGenerator
 from .codegen.lists import ListInfo
 from .codegen.parse import JsonParser
 from .codegen.context import Context
-from .codegen.util import BASE_ID, RESERVED_ITEM_IDS
+from .codegen.util import BASE_ID
 from .codegen.merge import merge
 
-from .types.Items import ItemData, SingleItemData
+from .types.Items import ItemData
 from .types.Locations import AccessInfo, LocationData
 from .types.Regions import RegionsData
 from .types.World import WorldData

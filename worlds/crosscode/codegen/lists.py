@@ -3,7 +3,7 @@ import typing
 from .ast import AstGenerator
 from .parse import JsonParser
 from .context import Context
-from .util import BASE_ID
+from .util import BASE_ID, RESERVED_ITEM_IDS
 
 from ..types.Items import ItemData, SingleItemData
 from ..types.Locations import LocationData
@@ -45,6 +45,12 @@ class ListInfo:
             if "cutscenes" in file: self.__add_location_list(file["cutscenes"])
             if "elements" in file: self.__add_location_list(file["elements"])
             if "quests" in file: self.__add_location_list(file["quests"], True)
+
+        for name, data in self.single_items_dict.items():
+            if (name, 1) in self.items_dict:
+                continue
+
+            self.items_dict[name, 1] = ItemData(data, 1, BASE_ID + RESERVED_ITEM_IDS + data.item_id)
 
     def __add_location(self, name: str, raw_loc: dict[str, typing.Any], create_event=False):
         num_rewards = 1
