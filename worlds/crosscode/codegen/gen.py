@@ -7,7 +7,7 @@ import jinja2
 
 from .ast import AstGenerator
 from .context import Context, make_context_from_directory
-from .emit import emit_list
+from .emit import emit_dict, emit_list
 from .util import GENERATED_COMMENT
 from .lists import ListInfo
 
@@ -59,12 +59,29 @@ class FileGenerator:
         # ITEMS
         template = self.environment.get_template("Items.template.py")
 
-        sorted_item_data = [(data.item_id, data) for data in self.lists.single_items_dict.values()]
+        sorted_single_item_data = [(value.item_id, key, value) for key, value in self.lists.single_items_dict.items()]
+        sorted_single_item_data.sort()
+
+        code_single_item_dict = emit_dict([(ast.Constant(key), self.ast_generator.create_ast_call_single_item(value)) for _, key, value in sorted_single_item_data])
+
+        sorted_item_data = [(value.combo_id, key, value) for key, value in self.lists.items_dict.items()]
         sorted_item_data.sort()
 
-        code_item_list = [ast.unparse(self.ast_generator.create_ast_call_item(v)) for _, v in sorted_item_data]
-        code = ",\n".join(code_item_list)
-        items_complete = template.render(items_data=code, num_items=self.ctx.num_items, **self.common_args)
+        item_dict_items = []
+        for _, key, value in sorted_item_data:
+            key = ast.Tuple(elts=[ast.Constant(x) for x in key])
+            ast.fix_missing_locations(key)
+            value = self.ast_generator.create_ast_call_item(value)
+            item_dict_items.append((key, value))
+
+        code_item_dict = emit_dict(item_dict_items)
+
+        items_complete = template.render(
+            single_items_dict=code_single_item_dict,
+            items_dict=code_item_dict,
+            num_items=self.ctx.num_items,
+            **self.common_args
+        )
 
         with open(os.path.join(self.world_dir, "Items.py"), "w") as f:
             f.write(items_complete)

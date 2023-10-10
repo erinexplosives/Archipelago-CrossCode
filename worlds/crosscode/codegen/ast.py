@@ -48,7 +48,7 @@ class AstGenerator:
         ast.fix_missing_locations(ast_item)
         return ast_item
 
-    def create_ast_call_item(self, data: SingleItemData):
+    def create_ast_call_single_item(self, data: SingleItemData):
         ast_item = ast.Call(
             func=ast.Name("SingleItemData"),
             args=[],
@@ -68,6 +68,32 @@ class AstGenerator:
                         attr=data.classification.name
                     )
                 ),
+            ]
+        )
+        ast.fix_missing_locations(ast_item)
+        return ast_item
+
+    def create_ast_call_item(self, data: ItemData):
+        ast_item = ast.Call(
+            func=ast.Name("ItemData"),
+            args=[],
+            keywords=[
+                ast.keyword(
+                    arg="item",
+                    value=ast.Subscript(
+                        value=ast.Name("single_items_dict"),
+                        slice=ast.Constant(data.item.name),
+                        ctx=ast.Load()
+                    )
+                ),
+                ast.keyword(
+                    arg="amount",
+                    value=ast.Constant(data.amount)
+                ),
+                ast.keyword(
+                    arg="combo_id",
+                    value=ast.Constant(data.combo_id)
+                )
             ]
         )
         ast.fix_missing_locations(ast_item)

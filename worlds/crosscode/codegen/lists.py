@@ -19,6 +19,7 @@ class ListInfo:
     events_data: dict[str, LocationData]
 
     single_items_dict: dict[str, SingleItemData]
+    items_dict: dict[tuple[str, int], ItemData]
 
     reward_amounts: dict[str, int]
 
@@ -32,6 +33,7 @@ class ListInfo:
         self.events_data = {}
 
         self.single_items_dict = {}
+        self.items_dict = {}
         
         self.reward_amounts = {}
 
@@ -79,6 +81,17 @@ class ListInfo:
                 code=None
             )
             self.events_data[event_name] = event
+
+        if "reward" not in raw_loc or len(raw_loc["reward"]) == 0:
+            return
+
+        for reward in raw_loc["reward"]:
+            item = self.json_parser.parse_reward(reward) 
+            key = (item.item.name, item.amount)
+            if key in self.items_dict:
+                item = self.items_dict[key]
+            else:
+                self.items_dict[key] = item
 
     def __add_location_list(self, loc_list: dict[str, dict[str, typing.Any]], create_events=False):
         for name, raw_loc in loc_list.items():

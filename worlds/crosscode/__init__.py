@@ -1,4 +1,5 @@
 import traceback
+from copy import deepcopy
 import sys
 import typing
 from BaseClasses import ItemClassification, Location, LocationProgressType, Region, Item
@@ -16,15 +17,15 @@ from .types.Locations import Condition, CrossCodeLocation
 from .types.World import WorldData
 from .types.Regions import RegionsData
 from .Options import Reachability, crosscode_options, addon_options
-from .Builder import WorldBuilder
 
 loaded_correctly = True
 
 try:
+    from .Builder import WorldBuilder
     from .Items import single_items_data, single_items_dict, items_by_full_name
     from .Locations import locations_data, locations_dict, events_data
     from .Regions import modes
-except ImportError as e:
+except Exception as e:
     loaded_correctly = False
     print("Failed to import items, locations, or regions, probably due to faulty code generation.", file=sys.stderr)
     traceback.print_exception(*sys.exc_info())
@@ -120,8 +121,10 @@ class CrossCodeWorld(World):
         if addonTuple in world_data_dict:
             self.world_data = world_data_dict[addonTuple]
         else:
-            self.world_data = WorldBuilder(self.ctx).build(self.addons)
+            self.world_data = WorldBuilder(deepcopy(self.ctx)).build(self.addons)
             items_by_full_name.update({item.name: item for item, _ in self.world_data.items_dict.values()})
+            self.item_id_to_name.update({data.combo_id: data.name for data, _ in self.world_data.items_dict.values()})
+            self.item_name_to_id.update({data.name: data.combo_id for data, _ in self.world_data.items_dict.values()})
             world_data_dict[addonTuple] = self.world_data
 
         if not loaded_correctly:
@@ -210,6 +213,7 @@ class CrossCodeWorld(World):
                 continue
 
             for _ in range(quantity[self.logic_mode]):
+                print(self.player, ":", data.name)
                 item = CrossCodeItem(self.player, data)
                 try:
                     idx = exclude.index(item)
@@ -237,6 +241,6 @@ class CrossCodeWorld(World):
         return {
             "mode": self.logic_mode,
             "options": {
-                "vtShadeLock": self.multiworld.vt_shade_lock[self.player].value
+                "vtShadeLock": self.multiworld.vtShadeLock[self.player].value
             }
         }

@@ -582,5 +582,3 @@ events_data = [
     LocationData(code=None, name='Meating Expectations (Event)'),
     LocationData(code=None, name='Raising the Steaks (Event)'),
 ]
-
-events_dict = { location.name: location for location in events_data }

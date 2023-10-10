@@ -1,12 +1,12 @@
 {{generated_comment | indent("# ", True)}}
 
 from BaseClasses import ItemClassification
-from .types.Items import SingleItemData
+from .types.Items import ItemData, SingleItemData
 
-num_types = {{num_items}}
+num_items = {{num_items}}
 
-single_items_data: list[SingleItemData] = [
-    {{items_data | indent(4)}}
-]
+single_items_dict: dict[str, SingleItemData] = {{single_items_dict}}
 
-single_items_dict = {data.name: data for data in items_data}
+items_dict: dict[tuple[str, int], ItemData] = {{items_dict}}
+
+item_data_by_name: dict[str, ItemData] = { f"{name} x{amount}" if amount > 1 else name: value for (name, amount), value in items_dict.items() }
