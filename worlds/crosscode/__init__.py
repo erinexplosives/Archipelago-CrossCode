@@ -148,17 +148,16 @@ class CrossCodeWorld(World):
         self.register_reachability(element_loc, ("Heat", "Cold", "Shock", "Wave"))
 
     def create_regions(self):
-        self.region_dict = {name: Region(name, self.player, self.multiworld) for name in self.region_pack.region_list}
+        self.region_dict = {name: Region(name, self.player, self.multiworld) for name in self.region_pack.region_list if name not in self.region_pack.excluded_regions}
+        print(self.region_pack.excluded_regions, self.region_dict)
         self.multiworld.regions.extend([val for val in self.region_dict.values()])
         self.location_events = {}
 
         for conn in self.region_pack.region_connections:
-            if conn.cond is None:
-                continue
-
-            self.region_dict[conn.region_from].add_exits(
-                [conn.region_to],
-                {conn.region_to: condition_satisfied(self.player, self.logic_mode, conn.cond)},
+            self.region_dict[conn.region_from].connect(
+                self.region_dict[conn.region_to],
+                f"{conn.region_from} => {conn.region_to}",
+                condition_satisfied(self.player, self.logic_mode, conn.cond) if conn.cond is not None else None
             )
 
             self.create_event_conditions(conn.cond)

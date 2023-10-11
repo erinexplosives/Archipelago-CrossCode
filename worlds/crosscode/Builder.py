@@ -90,7 +90,6 @@ class WorldBuilder:
             for mode in raw_loc["region"].keys():
                 if access_info is not None and \
                         access_info.region[mode] in self.region_packs[mode].excluded_regions:
-                    self.num_needed_items[mode] += 1
                     continue
 
                 if not mode in quantity:
