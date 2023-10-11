@@ -9,11 +9,11 @@ from .types.Items import ItemData, SingleItemData
 num_items = 676
 
 single_items_dict: dict[str, SingleItemData] = {
-    'Cold': SingleItemData(item_id=0, name='Heat', classification=ItemClassification.progression),
+    'Cold': SingleItemData(item_id=0, name='Cold', classification=ItemClassification.progression),
     'Golden Triangle': SingleItemData(item_id=0, name='Golden Triangle', classification=ItemClassification.filler),
     'Heat': SingleItemData(item_id=0, name='Heat', classification=ItemClassification.progression),
-    'Shock': SingleItemData(item_id=0, name='Heat', classification=ItemClassification.progression),
-    'Wave': SingleItemData(item_id=0, name='Heat', classification=ItemClassification.progression),
+    'Shock': SingleItemData(item_id=0, name='Shock', classification=ItemClassification.progression),
+    'Wave': SingleItemData(item_id=0, name='Wave', classification=ItemClassification.progression),
     'Sandwich': SingleItemData(item_id=1, name='Sandwich', classification=ItemClassification.filler),
     'Green Leaf Tea': SingleItemData(item_id=2, name='Green Leaf Tea', classification=ItemClassification.filler),
     'Sweet Berry Tea': SingleItemData(item_id=3, name='Sweet Berry Tea', classification=ItemClassification.filler),
@@ -667,10 +667,10 @@ single_items_dict: dict[str, SingleItemData] = {
 
 items_dict: dict[tuple[str, int], ItemData] = {
     ('Heat', 1): ItemData(item=single_items_dict['Heat'], amount=1, combo_id=300000),
-    ('Cold', 1): ItemData(item=single_items_dict['Heat'], amount=1, combo_id=300100),
+    ('Cold', 1): ItemData(item=single_items_dict['Cold'], amount=1, combo_id=300001),
+    ('Shock', 1): ItemData(item=single_items_dict['Shock'], amount=1, combo_id=300002),
+    ('Wave', 1): ItemData(item=single_items_dict['Wave'], amount=1, combo_id=300003),
     ('Golden Triangle', 1): ItemData(item=single_items_dict['Golden Triangle'], amount=1, combo_id=300100),
-    ('Shock', 1): ItemData(item=single_items_dict['Heat'], amount=1, combo_id=300100),
-    ('Wave', 1): ItemData(item=single_items_dict['Heat'], amount=1, combo_id=300100),
     ('Sandwich', 1): ItemData(item=single_items_dict['Sandwich'], amount=1, combo_id=300101),
     ('Green Leaf Tea', 1): ItemData(item=single_items_dict['Green Leaf Tea'], amount=1, combo_id=300102),
     ('Sweet Berry Tea', 1): ItemData(item=single_items_dict['Sweet Berry Tea'], amount=1, combo_id=300103),

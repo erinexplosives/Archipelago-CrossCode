@@ -88,6 +88,11 @@ class WorldBuilder:
                 self.items_dict[key] = (item, quantity)
 
             for mode in raw_loc["region"].keys():
+                if access_info is not None and \
+                        access_info.region[mode] in self.region_packs[mode].excluded_regions:
+                    self.num_needed_items[mode] += 1
+                    continue
+
                 if not mode in quantity:
                     quantity[mode] = 1
                 else:
@@ -101,12 +106,12 @@ class WorldBuilder:
         for name in addons:
             self.ctx.rando_data = merge(self.ctx.rando_data, self.ctx.addons[name])
 
+        self.region_packs = self.json_parser.parse_regions_data_list(self.ctx.rando_data["regions"])
+
         self.__add_location_list(self.ctx.rando_data["chests"])
         self.__add_location_list(self.ctx.rando_data["cutscenes"])
         self.__add_location_list(self.ctx.rando_data["elements"])
         self.__add_location_list(self.ctx.rando_data["quests"], True)
-
-        self.region_packs = self.json_parser.parse_regions_data_list(self.ctx.rando_data["regions"])
 
         return WorldData(
             region_packs=self.region_packs,

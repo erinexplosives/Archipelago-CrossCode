@@ -186,7 +186,7 @@ class JsonParser:
         try:
             single_item = self.single_items_dict[el]
         except KeyError:
-            single_item = SingleItemData("Heat", 0, ItemClassification.progression)
+            single_item = SingleItemData(el, 0, ItemClassification.progression)
             self.single_items_dict[el] = single_item
 
         try:

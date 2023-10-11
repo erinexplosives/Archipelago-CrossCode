@@ -22,8 +22,8 @@ loaded_correctly = True
 
 try:
     from .Builder import WorldBuilder
-    from .Items import single_items_dict, items_by_full_name
-    from .Locations import locations_data, locations_dict, events_data
+    from .Items import items_by_full_name
+    from .Locations import locations_data
     from .Regions import modes
 
 except Exception as e:
@@ -35,8 +35,6 @@ except Exception as e:
     single_items_dict = []
     items_by_full_name = {}
     locations_data = []
-    locations_dict = {}
-    events_data = []
     crosscode_options = {}
 
 world_data_dict: dict[typing.Any, WorldData] = {}
@@ -212,7 +210,6 @@ class CrossCodeWorld(World):
                 continue
 
             for _ in range(quantity[self.logic_mode]):
-                print(self.player, ":", data.name)
                 item = CrossCodeItem(self.player, data)
                 try:
                     idx = exclude.index(item)
