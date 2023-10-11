@@ -6,7 +6,7 @@ from BaseClasses import ItemClassification
 
 from .merge import merge
 
-BASE_ID = 300000
+BASE_ID = 3235824000
 
 # I reserve some item IDs at the beginning of our slot for elements
 # and other items that don't map to CrossCode items
