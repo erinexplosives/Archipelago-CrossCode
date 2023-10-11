@@ -78,10 +78,10 @@ class ListInfo:
 
             location_names.append(full_name)
 
-            loc = LocationData(name, self.current_location_code)
+            loc = LocationData(full_name, self.current_location_code)
             self.current_location_code += 1
 
-            self.locations_data[name] = loc
+            self.locations_data[full_name] = loc
 
         if not found and (num_rewards > 1 or create_event):
             event_name = f"{name} (Event)"

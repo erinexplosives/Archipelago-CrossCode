@@ -149,7 +149,6 @@ class CrossCodeWorld(World):
 
     def create_regions(self):
         self.region_dict = {name: Region(name, self.player, self.multiworld) for name in self.region_pack.region_list if name not in self.region_pack.excluded_regions}
-        print(self.region_pack.excluded_regions, self.region_dict)
         self.multiworld.regions.extend([val for val in self.region_dict.values()])
         self.location_events = {}
 
