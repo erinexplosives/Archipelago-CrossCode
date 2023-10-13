@@ -161,7 +161,7 @@ class CrossCodeWorld(World):
 
             self.create_event_conditions(conn.cond)
 
-            connection_event = Location(self.player, f"{conn.region_from} => {conn.region_to} (Event)", None, self.region_dict[conn.region_from])
+            connection_event = Location(self.player, f"{conn.region_to} (Event)", None, self.region_dict[conn.region_from])
 
             connection_event.place_locked_item(Item(f"{conn.region_to} (Event)", ItemClassification.progression, None, self.player))
 

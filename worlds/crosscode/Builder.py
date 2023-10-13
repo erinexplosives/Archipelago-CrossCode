@@ -66,7 +66,7 @@ class WorldBuilder:
                 full_name = full_name + f" - Reward {idx + 1}"
 
             access_info = self.json_parser.parse_location_access_info(raw_loc)
-            self.locations_access[name] = (locations_dict[name], access_info)
+            self.locations_access[full_name] = (locations_dict[full_name], access_info)
             self.current_location_code += 1
 
         if access_info is not None and (num_rewards > 1 or create_event):

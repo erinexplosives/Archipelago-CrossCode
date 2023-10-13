@@ -36,4 +36,4 @@ class RegionCondition(Condition):
     region_name: str
 
     def satisfied(self, state: CollectionState, player: int, mode: str) -> bool:
-        return mode == self.target_mode and state.has(f"{self.region_name} (Event)", player)
+        return mode != self.target_mode or state.has(f"{self.region_name} (Event)", player)
