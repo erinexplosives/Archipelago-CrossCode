@@ -12,7 +12,7 @@ from .types.Locations import AccessInfo, LocationData
 from .types.Regions import RegionsData
 from .types.World import WorldData
 
-from .Items import single_items_dict
+from .Items import items_dict, single_items_dict
 from .Locations import locations_dict, events_dict
 from .Regions import modes
 
@@ -43,6 +43,7 @@ class WorldBuilder:
         self.lists.single_items_dict = single_items_dict
 
         self.json_parser.single_items_dict = single_items_dict
+        self.json_parser.items_dict = items_dict
 
         self.region_packs = {}
         self.locations_access = {}

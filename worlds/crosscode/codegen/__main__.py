@@ -12,8 +12,55 @@
 #
 # To run it for yourself, navigate to the directory containing `codegen` and run `python -m codegen`
 
+import argparse
+
+from .context import make_context_from_directory
 from .gen import FileGenerator
+from .lists import ListInfo
 
-fg = FileGenerator("worlds/crosscode")
+parser = argparse.ArgumentParser(
+    prog="CrossCode Code Generation",
+    description="Generate python interfaces for CrossCode APWorld"
+)
 
-fg.generate_files()
+parser.add_argument(
+    "-p", "--no-python-interfaces",
+    dest="python",
+    action="store_false",
+    help="Don't generate Items.py, Location.py, etc. Instead, pull this data from the existing files"
+)
+
+parser.add_argument(
+    "-m", "--no-mod-data",
+    dest="mod",
+    action="store_false",
+    help="Don't generate out/data.json for the mod"
+)
+
+parser.add_argument(
+    "-a", "--no-archipelago-data",
+    dest="archipelago",
+    action="store_false"
+)
+
+namespace = parser.parse_args()
+
+if namespace.python:
+    fg = FileGenerator("worlds/crosscode")
+    fg.generate_python_files()
+else:
+    from ..Items import items_dict, single_items_dict
+    from ..Locations import locations_dict, events_dict
+
+    ctx = make_context_from_directory("worlds/crosscode/data")
+
+    lists = ListInfo(ctx)
+    lists.single_items_dict = single_items_dict
+    lists.items_dict = items_dict
+    lists.locations_data = locations_dict
+    lists.events_data = events_dict
+
+    fg = FileGenerator("worlds/crosscode", lists)
+
+if namespace.mod:
+    fg.generate_mod_files()

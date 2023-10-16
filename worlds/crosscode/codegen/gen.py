@@ -1,9 +1,13 @@
+from collections import defaultdict
+from copy import deepcopy
 import typing
 import ast
 import os
 import json
 
 import jinja2
+
+from worlds.crosscode.codegen.merge import merge
 
 from .ast import AstGenerator
 from .context import Context, make_context_from_directory
@@ -22,16 +26,21 @@ class FileGenerator:
 
     ast_generator: AstGenerator
 
-    def __init__(self, world_dir: str):
+    def __init__(self, world_dir: str, lists: typing.Optional[ListInfo] = None):
         data_dir = os.path.join(world_dir, "data")
         data_out_dir = os.path.join(world_dir, "data", "out")
         template_dir = os.path.join(world_dir, "templates")
 
-        self.ctx = make_context_from_directory(data_dir)
         self.environment = jinja2.Environment(
             loader=jinja2.FileSystemLoader(template_dir))
-        self.lists = ListInfo(self.ctx)
-        self.lists.build()
+
+        if lists == None:
+            self.ctx = make_context_from_directory(data_dir)
+            self.lists = ListInfo(self.ctx)
+            self.lists.build()
+        else:
+            self.lists = lists
+            self.ctx = lists.ctx
 
         self.world_dir = world_dir
         self.data_out_dir = data_out_dir
@@ -44,7 +53,7 @@ class FileGenerator:
             "default_mode": self.ctx.rando_data["defaultMode"],
         }
 
-    def generate_files(self) -> None:
+    def generate_python_files(self) -> None:
         # LOCATIONS
         template = self.environment.get_template("Locations.template.py")
 
@@ -97,10 +106,71 @@ class FileGenerator:
         with open(os.path.join(self.world_dir, "OptionsGenerated.py"), "w") as f:
             f.write(options_complete)
 
+    def generate_mod_files(self):
+        merged_data = deepcopy(self.ctx.rando_data)
+        for addon in self.ctx.addons.values():
+            merged_data = merge(merged_data, addon, True)
+
+        data_out = {
+            "items": defaultdict(lambda: defaultdict(dict)),
+            "quests": defaultdict(dict),
+        }
+
+        def get_codes(name: str) -> list[int]:
+            data = self.lists.locations_data
+            if name in data:
+                code = data[name].code
+                if code is None:
+                    raise RuntimeError(f"Trying to assign null code in {data}")
+                return [code]
+
+            result = []
+            idx = 1
+            while True:
+                full_name = f"{name} - Reward {idx}"
+                if full_name not in data:
+                    break
+                result.append(data[full_name].code)
+                idx += 1
+
+            return result
+
+        for name, chest in merged_data["chests"].items():
+            codes = get_codes(name)
+            map_name = chest["location"]["map"]
+            map_id = chest["location"]["mapId"]
+
+            room = data_out["items"][map_name]
+            room["chests"][map_id] = { "mwids": codes }
+
+        for name, cutscene in merged_data["cutscenes"].items():
+            codes = get_codes(name)
+            map_name = cutscene["location"]["map"]
+            map_id = cutscene["location"]["mapId"]
+            path = cutscene["location"]["path"]
+
+            room = data_out["items"][map_name]
+            room["cutscenes"][map_id] = { "mwids": codes, "path": path }
+
+        for name, element in merged_data["elements"].items():
+            codes = get_codes(name)
+            map_name = element["location"]["map"]
+            map_id = element["location"]["mapId"]
+
+            room = data_out["items"][map_name]
+            room["elements"][map_id] = { "mwids": codes }
+
+        for name, quest in merged_data["quests"].items():
+            codes = get_codes(name)
+            quest_id = quest["questid"]
+
+            room = data_out["quests"]
+            room[quest_id] = { "mwids": codes }
+
         try:
             os.mkdir(self.data_out_dir)
         except FileExistsError:
             pass
 
         with open(os.path.join(self.data_out_dir, "data.json"), "w") as f:
-            json.dump(self.ctx.rando_data, f, indent='\t')
+            json.dump(data_out, f, indent='\t')
