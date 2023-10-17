@@ -1,13 +1,16 @@
+from dataclasses import dataclass, field
 import typing
 
 from .Condition import Condition
 
-class RegionConnection(typing.NamedTuple):
+@dataclass
+class RegionConnection:
     region_from: str
     region_to: str
     cond: typing.Optional[list[Condition]]
 
-class RegionsData(typing.NamedTuple):
+@dataclass
+class RegionsData:
     starting_region: str
     goal_region: str
     excluded_regions: typing.List[str]

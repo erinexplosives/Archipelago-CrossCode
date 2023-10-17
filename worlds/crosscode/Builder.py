@@ -14,7 +14,6 @@ from .types.World import WorldData
 
 from .Items import items_dict, single_items_dict
 from .Locations import locations_dict, events_dict
-from .Regions import modes
 
 class WorldBuilder:
     ctx: Context
@@ -49,8 +48,6 @@ class WorldBuilder:
         self.locations_access = {}
         self.events_access = {}
         self.items_dict = {}
-
-        self.num_needed_items = {mode: 0 for mode in modes}
 
     def __add_location(self, name: str, raw_loc: dict[str, typing.Any], create_event=False):
         num_rewards = 1
@@ -107,6 +104,8 @@ class WorldBuilder:
             self.ctx.rando_data = merge(self.ctx.rando_data, self.ctx.addons[name])
 
         self.region_packs = self.json_parser.parse_regions_data_list(self.ctx.rando_data["regions"])
+
+        self.num_needed_items = {mode: 0 for mode in self.region_packs}
 
         self.__add_location_list(self.ctx.rando_data["chests"])
         self.__add_location_list(self.ctx.rando_data["cutscenes"])

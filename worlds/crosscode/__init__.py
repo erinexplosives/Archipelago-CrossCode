@@ -24,7 +24,6 @@ try:
     from .Builder import WorldBuilder
     from .Items import items_by_full_name
     from .Locations import locations_data
-    from .Regions import modes
 
 except Exception as e:
     loaded_correctly = False
@@ -127,7 +126,7 @@ class CrossCodeWorld(World):
             world_data_dict[addonTuple] = self.world_data
 
         start_inventory = self.multiworld.start_inventory[self.player].value
-        self.logic_mode = modes[self.multiworld.logic_mode[self.player].value]
+        self.logic_mode = self.world_data.modes[self.multiworld.logic_mode[self.player].value]
         self.region_pack = self.world_data.region_packs[self.logic_mode]
 
         if self.multiworld.start_with_green_leaf_shade[self.player].value:
@@ -161,7 +160,7 @@ class CrossCodeWorld(World):
 
             self.create_event_conditions(conn.cond)
 
-            connection_event = Location(self.player, f"{conn.region_to} (Event)", None, self.region_dict[conn.region_from])
+            connection_event = Location(self.player, f"{conn.region_from} => {conn.region_to} (Event)", None, self.region_dict[conn.region_from])
 
             connection_event.place_locked_item(Item(f"{conn.region_to} (Event)", ItemClassification.progression, None, self.player))
 
