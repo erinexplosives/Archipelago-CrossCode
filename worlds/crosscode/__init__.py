@@ -80,7 +80,7 @@ class CrossCodeWorld(World):
 
     addons: list[str]
 
-    ctx: Context = make_context_from_directory("worlds/crosscode/data")
+    ctx: Context = make_context_from_directory("worlds/crosscode/data", False)
 
     def register_reachability(self, option: Reachability, items: typing.Iterable[str]):
         if option == Reachability.option_local:

@@ -18,10 +18,19 @@ class Context:
         self.num_items = len(self.item_data)
 
 
-def make_context_from_directory(data_dir) -> Context:
+def make_context_from_directory(data_dir, with_assets=True) -> Context:
     master, addons = load_world_json(f"{data_dir}/in/master.json")
-    return Context(
-        master,
-        addons,
-        get_json_object(f"{data_dir}/assets/data/item-database.json")["items"],
-        get_json_object(f"{data_dir}/assets/data/database.json"))
+    if with_assets:
+        return Context(
+            master,
+            addons,
+            get_json_object(f"{data_dir}/assets/data/item-database.json")["items"],
+            get_json_object(f"{data_dir}/assets/data/database.json")
+        )
+    else:
+        return Context(
+            master,
+            addons,
+            [],
+            {}
+        )
