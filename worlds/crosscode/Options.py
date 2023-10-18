@@ -47,14 +47,14 @@ class ElementLocations(Reachability):
     display_name = "Element Locations"
 
 crosscode_options_pairs = [
-    ("vtShadeLock", VTShadeLock),
-    ("questRando", QuestRando),
+    ("vt_shade_lock", VTShadeLock),
+    ("quest_rando", QuestRando),
     ("start_with_green_leaf_shade", StartWithGreenLeafShade),
     ("shade_locations", ShadeLocations),
     ("element_locations", ElementLocations),
 ]
 
-addon_options = ["vtShadeLock", "questRando"]
+addon_options = ["vt_shade_lock", "quest_rando"]
 
 try:
     from .OptionsGenerated import LogicMode

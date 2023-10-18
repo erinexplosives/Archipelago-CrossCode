@@ -234,6 +234,6 @@ class CrossCodeWorld(World):
         return {
             "mode": self.logic_mode,
             "options": {
-                "vtShadeLock": self.multiworld.vtShadeLock[self.player].value
+                "vtShadeLock": self.multiworld.vt_shade_lock[self.player].value
             }
         }
