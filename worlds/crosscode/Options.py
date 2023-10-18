@@ -13,35 +13,41 @@ class QuestRando(Toggle):
     """
     display_name = "Quest Randomization"
 
+class VTSkip(DefaultOnToggle):
+    """
+    If enabled, Vermillion Tower will not need to be completed; instead, the player will skip through it to the final boss.
+    """
+    display_name = "Skip Vermillion Tower"
+
 class StartWithGreenLeafShade(DefaultOnToggle):
     """
     If enabled, the player will start with the green leaf shade, unlocking Autumn's Fall. This makes the early game far more open.
     """
     display_name = "Start with Green Leaf Shade"
 
+class StartWithChestDetector(DefaultOnToggle):
+    """
+    If enabled, the player will start with the chest detector item, which will notify them of the chests in the room.
+    """
+    display_name = "Start with Chest Detector"
+
 class Reachability(Choice):
-    option_local = 0
-    option_non_local = 1
-    option_any = 2
+    option_own_world = 0
+    option_different_world = 1
+    option_any_world = 2
 
     default = 2
 
 class ShadeLocations(Reachability):
     """
-    Where shades will appear
-    [Local] In your own world
-    [Non-local] In someone else's world
-    [Any] Anywhere in the multiworld
+    Where shades will appear.
     """
 
     display_name = "Shade Locations"
 
 class ElementLocations(Reachability):
     """
-    Where elements will appear
-    [Local] In your own world
-    [Non-local] In someone else's world
-    [Any] Anywhere in the multiworld
+    Where elements will appear.
     """
 
     display_name = "Element Locations"
@@ -49,7 +55,9 @@ class ElementLocations(Reachability):
 crosscode_options_pairs = [
     ("vt_shade_lock", VTShadeLock),
     ("quest_rando", QuestRando),
+    ("vt_skip", VTSkip),
     ("start_with_green_leaf_shade", StartWithGreenLeafShade),
+    ("start_with_chest_detector", StartWithChestDetector),
     ("shade_locations", ShadeLocations),
     ("element_locations", ElementLocations),
 ]

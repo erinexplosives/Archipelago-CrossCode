@@ -83,11 +83,11 @@ class CrossCodeWorld(World):
     ctx: Context = make_context_from_directory("worlds/crosscode/data", False)
 
     def register_reachability(self, option: Reachability, items: typing.Iterable[str]):
-        if option == Reachability.option_local:
+        if option == Reachability.option_own_world:
             local_items = self.multiworld.local_items[self.player].value
             for item in items:
                 local_items.add(item)
-        elif option == Reachability.option_non_local:
+        elif option == Reachability.option_different_world:
             non_local_items = self.multiworld.non_local_items[self.player].value
             for item in items:
                 non_local_items.add(item)
@@ -131,6 +131,9 @@ class CrossCodeWorld(World):
 
         if self.multiworld.start_with_green_leaf_shade[self.player].value:
             start_inventory["Green Leaf Shade"] = 1
+
+        if self.multiworld.start_with_chest_detector[self.player].value:
+            start_inventory["Chest Detector"] = 1
 
         shade_loc: Reachability = self.multiworld.shade_locations[self.player].value
         element_loc: Reachability = self.multiworld.element_locations[self.player].value
@@ -234,6 +237,7 @@ class CrossCodeWorld(World):
         return {
             "mode": self.logic_mode,
             "options": {
-                "vtShadeLock": self.multiworld.vt_shade_lock[self.player].value
+                "vtShadeLock": self.multiworld.vt_shade_lock[self.player].value,
+                "vtSkip": self.multiworld.vt_skip[self.player].value,
             }
         }
