@@ -2,7 +2,11 @@ import json
 import os
 import typing
 
-BASE_ID = 300000
+from BaseClasses import ItemClassification
+
+from .merge import merge
+
+BASE_ID = 3235824000
 
 # I reserve some item IDs at the beginning of our slot for elements
 # and other items that don't map to CrossCode items
@@ -27,17 +31,48 @@ def load_json_with_includes(filename: str) -> typing.Dict[str, typing.Any]:
 
     if not isinstance(master, dict):
         raise RuntimeError(f"error loading file '{filename}': root should be an object")
-    if not "includes" in master:
+    if "includes" not in master:
         return master
 
     includes = master.pop("includes")
     for subfilename in includes:
-        subfile = load_json_with_includes(f"{dirname}/{subfilename}")
+        subfile = load_json_with_includes(os.path.join(dirname, subfilename))
 
-        for key, value in subfile.items():
-            if key in master:
-                raise RuntimeError(f"error adding {subfilename}: cannot add key {key} to master")
-
-            master[key] = value
+        master = merge(master, subfile, apply_diffs=False)
 
     return master
+
+
+def load_world_json(filename: str) -> tuple[dict[str, typing.Any], dict[str, dict[str, typing.Any]]]:
+    master = load_json_with_includes(filename)
+    dirname = os.path.dirname(filename)
+
+    if "addons" not in master:
+        return (master, {})
+
+    addons = master.pop("addons")
+    loaded_addons = {}
+    for addon_name in addons:
+        subfile = load_json_with_includes(
+            os.path.join(dirname, "addons", addon_name, "master.json")
+        )
+
+        loaded_addons[addon_name] = subfile
+
+    return master, loaded_addons
+
+def get_item_classification(item: dict) -> ItemClassification:
+    """Deduce the classification of an item based on its item-database entry"""
+    if item["type"] == "CONS" or item["type"] == "TRADE":
+        return ItemClassification.filler
+    elif item["type"] == "KEY":
+        return ItemClassification.progression
+    elif item["type"] == "EQUIP":
+        return ItemClassification.useful
+    elif item["type"] == "TOGGLE":
+        if "Booster" in item["name"]["en_US"]:
+            return ItemClassification.progression
+        else:
+            return ItemClassification.filler
+    else:
+        raise RuntimeError(f"I don't know how to classify this item: {item['name']}")

@@ -1,179 +1,120 @@
 import typing
 import ast
 
+from ..types.Condition import Condition
+from ..types.Locations import LocationData
+from ..types.Regions import RegionConnection
+from ..types.Items import ItemData, SingleItemData
+
 
 class AstGenerator:
-    def create_ast_call_condition(self, conditions: typing.List[typing.List[str]]) -> ast.Call:
-        items = []
-        quests = []
-        locations = []
-        regions = {}
-
-        for cond in conditions:
-            if not isinstance(cond, list):
-                raise RuntimeError(f"Error parsing condition '{cond}': not a list")
-
-            if cond[0] == "item":
-                if len(cond) == 2:
-                    items.append([cond[1], 1])
-                else:
-                    items.append(cond[1:])
-                continue
-            elif cond[0] == "quest":
-                quests.append(cond[1])
-            elif cond[0] in ["cutscene", "location"]:
-                locations.append(cond[1])
-            elif cond[0] == "region":
-                mode, region = cond[1:]
-                if mode not in regions:
-                    regions[mode] = []
-                regions[mode].append(region)
-            else:
-                raise RuntimeError(f"Error parsing condition '{cond}': invalid condition type")
-
+    def create_ast_call_condition(self, condition: Condition) -> ast.Call:
         result = ast.Call(
-            func=ast.Name("Condition"),
+            func=ast.Name(condition.__class__.__name__),
             args=[],
-            keywords=[])
+            keywords=[ast.keyword(arg=key, value=ast.Constant(value)) for key, value in condition.__dict__.items()],
+        )
+        ast.fix_missing_locations(result)
 
-        if len(items) >= 1:
-            result.keywords.append(ast.keyword(
-                "items",
-                ast.List([ ast.Tuple([ast.Constant(s), ast.Constant(i)]) for s, i in items])))
-        if len(quests) >= 1:
-            result.keywords.append(ast.keyword(
-                "quests",
-                ast.List([ast.Constant(s) for s in quests])))
-        if len(locations) >= 1:
-            result.keywords.append(ast.keyword(
-                "locations",
-                ast.List([ast.Constant(s) for s in locations])))
-        if len(regions) >= 1:
-            result.keywords.append(ast.keyword(
-                "regions",
-                ast.Dict(
-                    keys=[ast.Constant(s) for s in regions.keys()],
-                    values=[ast.Constant(s) for s in regions.values()]
-                )
-            ))
         return result
 
-    def create_ast_call_location(
-            self,
-            name: str,
-            code: int | None,
-            clearance: str,
-            region: typing.Dict[str, str],
-            conditions: typing.List[typing.List[str]]
-    ) -> ast.Call:
-        keys: typing.List[ast.Constant] = []
-        values: typing.List[ast.Constant] = []
+    def create_ast_call_condition_list(self, conditions: typing.Optional[list[Condition]]) -> ast.expr:
+        if conditions is None:
+            return ast.Constant(None)
+        result = ast.List(elts=[])
 
-        for k, v in region.items():
-            keys.append(ast.Constant(k))
-            values.append(ast.Constant(v))
+        for condition in conditions:
+            result.elts.append(self.create_ast_call_condition(condition))
 
+        ast.fix_missing_locations(result)
+        return result
+
+    def create_ast_call_location(self, data: LocationData) -> ast.Call:
         ast_item = ast.Call(
             func=ast.Name("LocationData"),
             args=[],
             keywords=[
                 ast.keyword(
-                    arg="name",
-                    value=ast.Constant(name)
-                ),
-                ast.keyword(
                     arg="code",
-                    value=ast.Constant(code)
+                    value=ast.Constant(data.code)
                 ),
                 ast.keyword(
-                    arg="region",
-                    value=ast.Dict(
-                        keys=keys,
-                        values=values
-                    )
+                    arg="name",
+                    value=ast.Constant(data.name)
                 ),
             ]
         )
 
-        if len(conditions) > 0:
-            ast_item.keywords.append(ast.keyword(
-                arg="cond",
-                value=self.create_ast_call_condition(conditions)
-            ))
-
-        if clearance != "Default":
-            ast_item.keywords.append(ast.keyword(
-                arg="clearance",
-                value=ast.Constant(clearance)
-            ))
-
         ast.fix_missing_locations(ast_item)
         return ast_item
 
-    def create_ast_call_item(
-            self,
-            name: str,
-            item_id: int,
-            amount: int,
-            combo_id: int,
-            classification: str) -> ast.Call:
+    def create_ast_call_single_item(self, data: SingleItemData):
         ast_item = ast.Call(
-            func=ast.Name("ItemData"),
+            func=ast.Name("SingleItemData"),
             args=[],
             keywords=[
                 ast.keyword(
-                    arg="name",
-                    value=ast.Constant(name)
-                ),
-                ast.keyword(
                     arg="item_id",
-                    value=ast.Constant(item_id)
+                    value=ast.Constant(data.item_id)
                 ),
                 ast.keyword(
-                    arg="amount",
-                    value=ast.Constant(amount)
-                ),
-                ast.keyword(
-                    arg="combo_id",
-                    value=ast.Constant(combo_id)
+                    arg="name",
+                    value=ast.Constant(data.name)
                 ),
                 ast.keyword(
                     arg="classification",
                     value=ast.Attribute(
                         value=ast.Name("ItemClassification"),
-                        attr=classification,
+                        attr=data.classification.name
                     )
-                ),
-                ast.keyword(
-                    arg="quantity",
-                    value=ast.Dict(keys=[], values=[])
                 ),
             ]
         )
         ast.fix_missing_locations(ast_item)
         return ast_item
 
-    def create_ast_call_region_connection(
-            self,
-            region_from: str,
-            region_to: str,
-            conditions) -> ast.Call:
+    def create_ast_call_item(self, data: ItemData):
+        ast_item = ast.Call(
+            func=ast.Name("ItemData"),
+            args=[],
+            keywords=[
+                ast.keyword(
+                    arg="item",
+                    value=ast.Subscript(
+                        value=ast.Name("single_items_dict"),
+                        slice=ast.Constant(data.item.name),
+                        ctx=ast.Load()
+                    )
+                ),
+                ast.keyword(
+                    arg="amount",
+                    value=ast.Constant(data.amount)
+                ),
+                ast.keyword(
+                    arg="combo_id",
+                    value=ast.Constant(data.combo_id)
+                )
+            ]
+        )
+        ast.fix_missing_locations(ast_item)
+        return ast_item
 
+    def create_ast_call_region_connection(self, conn: RegionConnection):
         ast_region = ast.Call(
             func=ast.Name("RegionConnection"),
             args=[],
             keywords=[
                 ast.keyword(
                     arg="region_from",
-                    value=ast.Constant(region_from)
+                    value=ast.Constant(conn.region_from)
                 ),
                 ast.keyword(
                     arg="region_to",
-                    value=ast.Constant(region_to)
+                    value=ast.Constant(conn.region_to)
                 ),
                 ast.keyword(
                     arg="cond",
-                    value=self.create_ast_call_condition(conditions)
+                    value=self.create_ast_call_condition_list(conn.cond)
                 ),
             ]
         )
@@ -181,23 +122,3 @@ class AstGenerator:
         ast.fix_missing_locations(ast_region)
 
         return ast_region
-
-    def add_quantity(
-            self,
-            item: ast.Call,
-            mode: str):
-        quantity_keyword = item.keywords[-1]
-        quantity = quantity_keyword.value
-
-        assert (isinstance(quantity, ast.Dict))
-        try:
-            idx = list(map(lambda x: x.value, quantity.keys)).index(mode)
-        except ValueError:
-            quantity.keys.append(ast.Constant(mode))
-            quantity.values.append(ast.Constant(1))
-        else:
-            number = quantity.values[idx]
-            assert (isinstance(number, ast.Constant))
-            number.value += 1
-
-        ast.fix_missing_locations(quantity)

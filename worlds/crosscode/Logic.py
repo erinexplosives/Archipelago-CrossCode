@@ -1,7 +1,7 @@
 import typing
 from BaseClasses import CollectionState
-from .Locations import Condition, LocationData
-from .Regions import RegionConnection
+from .types.Locations import Condition, LocationData
+from .types.Regions import RegionConnection
 
 # this is uncharacteristic of me, but i'm hardcoding something here. weird.
 clearance_items = {
@@ -10,17 +10,9 @@ clearance_items = {
     "Gold": "Radiant Key",
 }
 
-def condition_satisfied(player: int, mode: str, condition: Condition) -> typing.Callable[[CollectionState], bool]:
+def condition_satisfied(player: int, mode: str, conditions: list[Condition]) -> typing.Callable[[CollectionState], bool]:
     def conditions_satisfied_internal(state: CollectionState) -> bool:
-        if not all([state.count(item, player) >= amount for item, amount in condition.items]):
-            return False
-        if not all([state.has(f"{quest} (Event)", player) for quest in condition.quests]):
-            return False
-        if not all([state.has(f"{location} (Event)", player) for location in condition.locations]):
-            return False
-        if mode in condition.regions and not all([state.has(f"{region} (Event)", player) for region in condition.regions[mode]]):
-            return False
-        return True
+        return all([c.satisfied(state, player, mode) for c in conditions])
 
     return conditions_satisfied_internal
 

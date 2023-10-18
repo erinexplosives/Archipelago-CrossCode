@@ -1,29 +1,52 @@
+from collections import defaultdict
+from copy import deepcopy
+import sys
 import typing
 import ast
-import string
 import os
 import json
 
 import jinja2
 
+from worlds.crosscode.codegen.merge import merge
+
+from .ast import AstGenerator
 from .context import Context, make_context_from_directory
-from .state import GameState
-from .util import GENERATED_COMMENT
+from .emit import emit_dict, emit_list
+from .util import BASE_ID, GENERATED_COMMENT, RESERVED_ITEM_IDS
+from .lists import ListInfo
 
 
 class FileGenerator:
     environment: jinja2.Environment
     ctx: Context
     common_args: typing.Dict[str, typing.Any]
-    state: GameState
+    lists: ListInfo
+    world_dir: str
     data_out_dir: str
 
-    def __init__(self, data_dir: str, data_out_dir: str):
-        self.ctx = make_context_from_directory(data_dir)
+    ast_generator: AstGenerator
+
+    def __init__(self, world_dir: str, lists: typing.Optional[ListInfo] = None):
+        data_dir = os.path.join(world_dir, "data")
+        data_out_dir = os.path.join(world_dir, "data", "out")
+        template_dir = os.path.join(world_dir, "templates")
+
         self.environment = jinja2.Environment(
-            loader=jinja2.FileSystemLoader("templates"))
-        self.state = GameState(self.ctx)
+            loader=jinja2.FileSystemLoader(template_dir))
+
+        if lists == None:
+            self.ctx = make_context_from_directory(data_dir)
+            self.lists = ListInfo(self.ctx)
+            self.lists.build()
+        else:
+            self.lists = lists
+            self.ctx = lists.ctx
+
+        self.world_dir = world_dir
         self.data_out_dir = data_out_dir
+
+        self.ast_generator = AstGenerator()
 
         self.common_args = {
             "generated_comment": GENERATED_COMMENT,
@@ -31,81 +54,49 @@ class FileGenerator:
             "default_mode": self.ctx.rando_data["defaultMode"],
         }
 
-    def generate_files(self) -> None:
-        self.state.calculate_game_state()
-
+    def generate_python_files(self) -> None:
         # LOCATIONS
         template = self.environment.get_template("Locations.template.py")
 
-        code_location_list = [ast.unparse(item)
-                              for item in self.state.ast_location_list]
-        code_locations_data = ",\n".join(code_location_list)
+        code_locations_data = emit_list([self.ast_generator.create_ast_call_location(loc) for loc in self.lists.locations_data.values()])
+        code_events_data =  emit_list([self.ast_generator.create_ast_call_location(loc) for loc in self.lists.events_data.values()])
 
-        code_event_list = [ast.unparse(item)
-                              for item in self.state.ast_event_list]
-        code_events_data = ",\n".join(code_event_list)
-        locations_complete = template.render(
-            locations_data=code_locations_data, events_data=code_events_data, 
-            needed_items=self.state.needed_items, **self.common_args)
+        locations_complete = template.render(locations_data=code_locations_data, events_data=code_events_data, **self.common_args)
 
-        with open("Locations.py", "w") as f:
+        with open(os.path.join(self.world_dir, "Locations.py"), "w") as f:
             f.write(locations_complete)
 
         # ITEMS
         template = self.environment.get_template("Items.template.py")
 
-        found_item_keys = list(dict.keys(self.state.found_items))
-        found_item_keys.sort()
+        sorted_single_item_data = [(value.item_id, key, value) for key, value in self.lists.single_items_dict.items()]
+        sorted_single_item_data.sort()
 
-        code_item_list = [ast.unparse(self.state.found_items[k])
-                          for k in found_item_keys]
-        code = ",\n".join(code_item_list)
-        items_complete = template.render(items_data=code, **self.common_args)
+        code_single_item_dict = emit_dict([(ast.Constant(key), self.ast_generator.create_ast_call_single_item(value)) for _, key, value in sorted_single_item_data])
 
-        with open("Items.py", "w") as f:
-            f.write(items_complete)
+        sorted_item_data = [(value.combo_id, key, value) for key, value in self.lists.items_dict.items()]
+        sorted_item_data.sort()
 
-        # REGIONS
-        template = self.environment.get_template("Regions.template.py")
+        item_dict_items = []
+        for _, key, value in sorted_item_data:
+            key = ast.Tuple(elts=[ast.Constant(x) for x in key])
+            ast.fix_missing_locations(key)
+            value = self.ast_generator.create_ast_call_item(value)
+            item_dict_items.append((key, value))
 
-        code_region_pack_list = []
+        code_item_dict = emit_dict(item_dict_items)
 
-        for mode, region_map in self.state.region_maps.items():
-            regions_seen_keys = list(region_map.regions_seen)
-            regions_seen_keys.sort(key=lambda x: float(
-                x.strip(string.ascii_letters)))
-
-            code_region_list = [
-                f'{ast.unparse(ast.Constant(k))}' for k in regions_seen_keys]
-            code_region_list = ",\n".join(code_region_list)
-
-            code_region_connections = [ast.unparse(
-                item) for item in region_map.connections]
-            code_region_connections = ",\n".join(code_region_connections)
-
-            code_excluded_regions = ast.unparse(
-                ast.List([ast.Constant(x) for x in self.ctx.rando_data["excludedRegions"][mode]]))
-
-            code_region_pack_list.append({
-                "name": mode,
-                "region_list": code_region_list,
-                "region_connections": code_region_connections,
-                "starting_region": self.ctx.rando_data["startingRegion"][mode],
-                "goal_region": self.ctx.rando_data["goalRegion"][mode],
-                "excluded_regions": code_excluded_regions
-            })
-
-        regions_complete = template.render(
-            region_packs=code_region_pack_list,
-            modes_string=", ".join(
-                [f'"{m}"' for m in self.ctx.rando_data["modes"]]),
+        items_complete = template.render(
+            single_items_dict=code_single_item_dict,
+            items_dict=code_item_dict,
+            num_items=self.ctx.num_items,
             **self.common_args
         )
 
-        with open("Regions.py", "w") as f:
-            f.write(regions_complete)
+        with open(os.path.join(self.world_dir, "Items.py"), "w") as f:
+            f.write(items_complete)
 
-        template = self.environment.get_template("Options.template.py")
+        template = self.environment.get_template("OptionsGenerated.template.py")
 
         options_complete = template.render(
             mode_index=self.ctx.rando_data["modes"].index(
@@ -113,13 +104,79 @@ class FileGenerator:
             **self.common_args
         )
 
-        with open("Options.py", "w") as f:
+        with open(os.path.join(self.world_dir, "OptionsGenerated.py"), "w") as f:
             f.write(options_complete)
+
+    def generate_mod_files(self):
+        merged_data = deepcopy(self.ctx.rando_data)
+        for addon in self.ctx.addons.values():
+            merged_data = merge(merged_data, addon, True)
+
+        data_out = {
+            "items": defaultdict(lambda: defaultdict(dict)),
+            "quests": defaultdict(dict),
+        }
+
+        def get_codes(name: str) -> list[int]:
+            data = self.lists.locations_data
+            if name in data:
+                code = data[name].code
+                if code is None:
+                    raise RuntimeError(f"Trying to assign null code in {data}")
+                return [code]
+
+            result = []
+            idx = 1
+            while True:
+                full_name = f"{name} - Reward {idx}"
+                if full_name not in data:
+                    break
+                result.append(data[full_name].code)
+                idx += 1
+
+            return result
+
+        for name, chest in merged_data["chests"].items():
+            codes = get_codes(name)
+            map_name = chest["location"]["map"]
+            map_id = chest["location"]["mapId"]
+
+            room = data_out["items"][map_name]
+            room["chests"][map_id] = { "mwids": codes }
+
+        for name, cutscene in merged_data["cutscenes"].items():
+            codes = get_codes(name)
+            map_name = cutscene["location"]["map"]
+            map_id = cutscene["location"]["mapId"]
+            path = cutscene["location"]["path"]
+
+            room = data_out["items"][map_name]
+            if map_id not in room["cutscenes"]:
+                room["cutscenes"][map_id] = []
+
+            room["cutscenes"][map_id].append({ "mwids": codes, "path": path })
+
+        for name, element in merged_data["elements"].items():
+            codes = get_codes(name)
+            map_name = element["location"]["map"]
+            map_id = element["location"]["mapId"]
+
+            room = data_out["items"][map_name]
+            room["elements"][map_id] = { "mwids": codes }
+
+        for name, quest in merged_data["quests"].items():
+            codes = get_codes(name)
+            quest_id = quest["questid"]
+            if not quest_id in self.ctx.database["quests"]:
+                print(f"{quest_id} does not exist", sys.stderr)
+
+            room = data_out["quests"]
+            room[quest_id] = { "mwids": codes }
 
         try:
             os.mkdir(self.data_out_dir)
         except FileExistsError:
             pass
 
-        with open(f"{self.data_out_dir}/data.json", "w") as f:
-            json.dump(self.ctx.rando_data, f, indent='\t')
+        with open(os.path.join(self.data_out_dir, "data.json"), "w") as f:
+            json.dump(data_out, f, indent='\t')

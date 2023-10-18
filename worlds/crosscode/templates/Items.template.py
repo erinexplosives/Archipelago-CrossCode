@@ -1,38 +1,12 @@
 {{generated_comment | indent("# ", True)}}
 
-import typing
-from BaseClasses import Item, ItemClassification
+from BaseClasses import ItemClassification
+from .types.Items import ItemData, SingleItemData
 
-class ItemData(typing.NamedTuple):
-    name: str
-    item_id: int
-    amount: int
-    combo_id: int
-    classification: ItemClassification
-    quantity: typing.Dict[str, int]
+num_items = {{num_items}}
 
-    def __hash__(self):
-        return hash((self.item_id, self.amount))
+single_items_dict: dict[str, SingleItemData] = {{single_items_dict}}
 
-    def __eq__(self, other):
-        return self.item_id == other.item_id and self.amount == other.amount
+items_dict: dict[tuple[str, int], ItemData] = {{items_dict}}
 
-class CrossCodeItem(Item):
-    game: str = "CrossCode"
-    data: ItemData
-
-    def __init__(self, player: int, data: ItemData):
-        super(CrossCodeItem, self).__init__(
-            data.name,
-            data.classification,
-            data.combo_id,
-            player,
-        )
-
-        self.data = data
-
-items_data = [
-    {{items_data | indent(4)}}
-]
-
-items_dict = {data.name: data for data in items_data}
+items_by_full_name: dict[str, ItemData] = { f"{name} x{amount}" if amount > 1 else name: value for (name, amount), value in items_dict.items() }
