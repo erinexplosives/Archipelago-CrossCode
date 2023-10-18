@@ -1,5 +1,6 @@
 from collections import defaultdict
 from copy import deepcopy
+import sys
 import typing
 import ast
 import os
@@ -150,7 +151,10 @@ class FileGenerator:
             path = cutscene["location"]["path"]
 
             room = data_out["items"][map_name]
-            room["cutscenes"][map_id] = { "mwids": codes, "path": path }
+            if map_id not in room["cutscenes"]:
+                room["cutscenes"][map_id] = []
+
+            room["cutscenes"][map_id].append({ "mwids": codes, "path": path })
 
         for name, element in merged_data["elements"].items():
             codes = get_codes(name)
@@ -163,6 +167,8 @@ class FileGenerator:
         for name, quest in merged_data["quests"].items():
             codes = get_codes(name)
             quest_id = quest["questid"]
+            if not quest_id in self.ctx.database["quests"]:
+                print(f"{quest_id} does not exist", sys.stderr)
 
             room = data_out["quests"]
             room[quest_id] = { "mwids": codes }
